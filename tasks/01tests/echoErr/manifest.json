@@ -1,0 +1,13 @@
+{
+  "title": "echoErr",
+  "description": "Test dex8lib.Log library, method echoErr which echos error and saves it in task_status.errs mongodb collection.",
+  "thumbnail": "",
+  "category": "01tests",
+  "database_id": null,
+  "files": [
+    {"folder": "01tests/echoErr", "name": "input.js", "description": "input desc", "content": ""},
+    {"folder": "01tests/echoErr", "name": "main.js", "description": "main desc", "content": ""},
+    {"folder": "01tests/echoErr", "name": "func_err.js", "description": "func_err desc", "content": ""}
+  ],
+  "howto": ""
+}

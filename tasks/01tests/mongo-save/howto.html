@@ -1,0 +1,28 @@
+<h1>01tests</h1>
+<h2>mongo-save</h2>
+
+<b>cmd: </b> <i>$ node start 01tests/mongo-save</i>
+
+<br>
+<br><b>description:</b>
+<p>The example shows how to use <b>dex8lib.Mongo</b> library.</p>
+
+<br>
+<br><b>input.js</b>
+<p>Contains object which should be inserted into mongo database.</p>
+
+<br>
+<br><b>functions:</b>
+<ul>
+  <li><b>mongoConnect.js</b> - connects to mongo database and creates mongoose model</li>
+  <li><b>modifyInput.js</b> - modifies object defined in input.js</li>
+  <li><b>mongoSave.js</b> - saves modified input object into mongodb</li>
+</ul>
+
+<br>
+<br><b>main.js</b>
+<ol>
+  <li>execute mongoConnect, modifyInput and mongoSave serially</li>
+  <li>repeat mongoSave 3 times</li>
+</ol>
+

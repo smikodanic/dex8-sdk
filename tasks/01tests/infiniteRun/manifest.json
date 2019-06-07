@@ -1,0 +1,12 @@
+{
+  "title": "infiniteRun",
+  "description": "Task which execute func1 50000 times.",
+  "thumbnail": "",
+  "category": "01tests",
+  "database_id": null,
+  "files": [
+    {"folder": "01tests/infiniteRun", "name": "main.js", "description": "main desc", "content": ""},
+    {"folder": "01tests/infiniteRun", "name": "func1.js", "description": "func1 desc", "content": ""}
+  ],
+  "howto": ""
+}

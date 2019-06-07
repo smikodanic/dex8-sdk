@@ -1,0 +1,15 @@
+{
+  "title": "Task Title",
+  "description": "Task description.",
+  "thumbnail": "http://",
+  "category": "01tests",
+  "database_id": null,
+  "files": [
+    {"folder": "01tests/something", "name": "setings.js", "description": "setings desc", "content": ""},
+    {"folder": "01tests/something", "name": "input.js", "description": "input desc", "content": ""},
+    {"folder": "01tests/something", "name": "secrets.js", "description": "secrets desc", "content": ""},
+    {"folder": "01tests/something", "name": "main.js", "description": "main desc", "content": ""},
+    {"folder": "01tests/something", "name": "func1.js", "description": "func1 desc", "content": ""}
+  ],
+  "howto": ""
+}
