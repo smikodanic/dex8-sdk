@@ -1,5 +1,5 @@
 // files
-const config = require('./config');
+const settings = require('./settings');
 const input = require('./input');
 const secrets = require('./secrets');
 const func1 = require('./func1');

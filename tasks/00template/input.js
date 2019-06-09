@@ -1,4 +1,1 @@
-module.exports = {
-  url: 'http://adsuu.com',
-  depth: 4
-};
+module.exports = 5;

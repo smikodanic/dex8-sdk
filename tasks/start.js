@@ -6,7 +6,7 @@ require('rootpath')();
 const chalk = require('chalk');
 const moment = require('moment');
 const fse = require('fs-extra');
-const dex8lib = require('../dex8lib');
+const dex8lib = require('dex8-lib');
 
 // add to FunctionFlow library
 const puppeteer = require('puppeteer');

@@ -18,15 +18,14 @@
   "author": "Sasa Mikodanic (Cloud jdoo)",
   "license": "MIT",
   "dependencies": {
+    "bluebird": "^3.5.5",
     "chalk": "^2.4.1",
     "cheerio": "^1.0.0-rc.2",
+    "dex8-lib": "file:../dex8-lib",
     "fs-extra": "^7.0.1",
     "got": "^9.6.0",
-    "moment": "^2.22.2",
+    "moment": "^2.24.0",
     "puppeteer": "^1.11.0",
-    "rootpath": "^0.1.2",
-    "bluebird": "^3.5.5",
-    "mongoose": "^5.2.14",
-    "socket.io-client": "^2.1.1"
+    "rootpath": "^0.1.2"
   }
 }
