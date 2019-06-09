@@ -21,7 +21,7 @@
     "bluebird": "^3.5.5",
     "chalk": "^2.4.1",
     "cheerio": "^1.0.0-rc.2",
-    "dex8-lib": "file:../dex8-lib",
+    "dex8-lib": "^1.0.0",
     "fs-extra": "^7.0.1",
     "got": "^9.6.0",
     "moment": "^2.24.0",
