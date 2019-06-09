@@ -21,6 +21,26 @@ $ node start <path-to-folder>
 ```
 
 
+## dex8-lib
+*dex8-lib* is library required for faster DEX8 task development.
+```json
+package.json in development
+---------------------------
+"dependencies": {
+  "dex8-lib": "file:../dex8-lib",
+}
+
+IMPORTANT!!! Every time when *dex8-lib* is changed run **$npm install dex8-lib**.
+
+
+
+package.json in production
+---------------------------
+"dependencies": {
+  "dex8-lib": "^1.0.0",
+}
+
+
 ### Folders
 - **/tasks** - DEX8 task development (write and test new task scripts here)
 
