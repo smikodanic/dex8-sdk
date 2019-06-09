@@ -11,13 +11,14 @@ If you want to use this library in other projects.
 ```bash
 npm install dex8-sdk --save
 
-const dex8lib = require('dex8-sdk).dex8lib;
+const dex8lib = require('dex8-sdk').dex8lib;
 ```
 
 ## DEX8 Task Development
 If you want to use this library for DEX8 tasks development.
 ```bash
-$ git clone git@github.com:smikodanic/dex8-sdk.git
+$ git clone git@github.com:smikodanic/dex8-sdk.git <dex8-project-name>
+$ rm -rf .git    (remove git dir)
 $ npm run inst   (will install all npm packages without downloading Chromium browser)
 
 -- run script --
@@ -34,4 +35,4 @@ For faster development copy&paste *tasks/00template* .
 
 
 ### Licence
-Copyright (c) 2018 Saša Mikodanić (Cloud jdoo) licensed under [MIT](LICENSE) .
+Copyright (c) 2018 Saša Mikodanić (Cloud jdoo) licensed under [MIT](https://github.com/smikodanic/dex8-sdk/blob/master/LICENSE) .
