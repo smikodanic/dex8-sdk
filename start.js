@@ -53,7 +53,7 @@ if (fse.existsSync(dbPath)) {
   const password = database.password;
   const options = database.options;
   const mo_config = {uri, username, password, options};
-  mongo = new dex8lib.Mongo(mo_config, null, null, null);
+  mongo = new dex8lib.Mongo(mo_config, null, null, null, null);
 }
 // dex8lib.Randomize
 const randomize = new dex8lib.Randomize();
