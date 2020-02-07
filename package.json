@@ -1,6 +1,6 @@
 {
   "name": "dex8-sdk",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "title": "DEX8 SDK",
   "description": "DEX8 SDK for DEX8 platform.",
   "main": "./index.js",
