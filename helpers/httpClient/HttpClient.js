@@ -11,7 +11,7 @@ const pkg_json = require('../../package.json');
 class HttpClient {
 
   /**
-   * @param {Object} opts - HTTP Client options {timeout, retry, headers, encodeURI}
+   * @param {Object} opts - HTTP Client options {timeout, retry, maxRedirects, headers, encodeURI}
    */
   constructor(opts) {
     this.protocol = 'http:';
@@ -33,7 +33,8 @@ class HttpClient {
           'connection': 'close', // keep-alive
           'content-type': 'text/html; charset=UTF-8'
         },
-        encodeURI: false
+        encodeURI: false,
+        maxRedirects: 3
       };
     } else {
       this.opts = opts;
@@ -41,6 +42,9 @@ class HttpClient {
 
     // default headers
     this.headers = this.opts.headers;
+
+    // count 3xx redirects
+    this.redirectCounter = 0;
   }
 
 
@@ -147,9 +151,16 @@ class HttpClient {
   }
 
 
-  _handleRedirect(statusCode) {
-    if (/^3\d{2}/.test(statusCode)) { // 300, 301, 302, ...
-      console.log(`Redirection: ${statusCode}`);
+  _handleRedirect(url, method, body_obj, meta) {
+    if (/^3\d{2}/.test(meta.statusCode) && this.redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
+
+      // repeat request with new url
+      const url_new = meta.headers.location;
+      console.log(`Redirection ${meta.statusCode} from ${url} to ${url_new}`);
+
+      this.ask(url_new, method, body_obj);
+
+      this.redirectCounter++;
       return true;
     }
     return false;
@@ -197,9 +208,6 @@ class HttpClient {
 
         const clientRequest = requestLib(requestOpts, res => {
 
-          const isRedirected = this._handleRedirect(res.statusCode);
-          if (isRedirected) { return; }
-
           // meta
           const meta = {
             statusCode: res.statusCode,
@@ -209,6 +217,10 @@ class HttpClient {
             gzip: false,
             https: /^https/.test(this.protocol)
           };
+
+          // redirect 3xx
+          const isRedirected = this._handleRedirect(url, method, body_obj, meta);
+          if (isRedirected) { return; }
 
           // collect raw data e.g. buffer data
           const buf_chunks = [];
@@ -220,7 +232,6 @@ class HttpClient {
           res.on('end', () => {
             // concat buffer parts
             const buf = Buffer.concat(buf_chunks);
-
 
             // decompress
             let gunziped = buf;
