@@ -21,8 +21,11 @@ class HttpClient {
 
     if (!opts) {
       this.opts = {
+        encodeURI: false,
         timeout: 8000,
         retry: 3,
+        retryDelay: 3400,
+        maxRedirects: 3,
         headers: {
           'authorization': '',
           'user-agent': `DEX8-SDK/${pkg_json.version} https://dex8.com`, // 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
@@ -32,9 +35,7 @@ class HttpClient {
           'accept-encoding': 'gzip',
           'connection': 'close', // keep-alive
           'content-type': 'text/html; charset=UTF-8'
-        },
-        encodeURI: false,
-        maxRedirects: 3
+        }
       };
     } else {
       this.opts = opts;
@@ -151,23 +152,6 @@ class HttpClient {
   }
 
 
-  _handleRedirect(url, method, body_obj, meta) {
-    if (/^3\d{2}/.test(meta.statusCode) && this.redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
-
-      // repeat request with new url
-      const url_new = meta.headers.location;
-      console.log(`Redirection ${meta.statusCode} from ${url} to ${url_new}`);
-
-      this.ask(url_new, method, body_obj);
-
-      this.redirectCounter++;
-      return true;
-    }
-    return false;
-  }
-
-
-
 
   /**
    * Change header object.
@@ -180,12 +164,12 @@ class HttpClient {
 
 
   /**
-   * Sending HTTP request to HTTP server.
+   * Sending one HTTP request to HTTP server.
    * @param {String} url - https://www.dex8.com/contact
    * @param {String} method - GET, POST, PUT, DELETE, PATCH
    * @param {Objcet} body_obj - http body
    */
-  ask(url, method = 'GET', body_obj) {
+  askOnce(url, method = 'GET', body_obj) {
     this._parseUrl(url);
     const agent = this._hireAgent(this.opts);
     const requestLib = this._selectRequest();
@@ -237,10 +221,6 @@ class HttpClient {
             https: /^https/.test(this.protocol)
           };
 
-          // redirect 3xx
-          const isRedirected = this._handleRedirect(url, method, body_obj, meta);
-          if (isRedirected) { return; }
-
           // collect raw data e.g. buffer data
           const buf_chunks = [];
           res.on('data', (buf_chunk) => {
@@ -290,6 +270,36 @@ class HttpClient {
     }
 
   } // \request
+
+
+
+  async ask(url, method = 'GET', body_obj) {
+    const answer = await this.askOnce(url, method, body_obj);
+
+    let redirectCounter = 0;
+    const answers = [answer];
+
+    /*** a) HANDLE 3XXX REDIRECTS */
+    if (!!answer && !!answer.meta && /^3\d{2}/.test(answer.meta.statusCode)) { // 300, 301, 302, ...
+
+      if (redirectCounter <= this.opts.maxRedirects) {
+        redirectCounter++;
+
+        // repeat request with new url
+        const url_new = answer.meta.headers.location;
+        console.log(`#${redirectCounter} redirection ${answer.meta.statusCode} from ${url} to ${url_new}`);
+
+        const ans = await this.askOnce(url_new, method, body_obj);
+        answers.push(ans);
+
+      }
+
+    }
+
+
+
+    return answers;
+  }
 
 
 

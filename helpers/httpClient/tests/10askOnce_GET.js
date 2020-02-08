@@ -1,5 +1,5 @@
 /**
- * $ node 01paresUrl.js <url>
+ * $ node 10askOnce_GET.js <url>
  */
 
 const HttpClient = require('../HttpClient');
@@ -11,7 +11,7 @@ console.log('asked url:: GET', url);
 const getUrl = async() => {
   try {
     const dhc = new HttpClient(); // dex8 http client instance
-    const answer = await dhc.ask(url);
+    const answer = await dhc.askOnce(url);
 
     console.log('answer:\n', answer);
 

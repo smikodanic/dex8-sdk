@@ -1,5 +1,5 @@
 /**
- * $ node 01paresUrl.js <url>
+ * $ node 02correctUrl.js <url>
  */
 
 const HttpClient = require('../HttpClient');
