@@ -24,7 +24,7 @@ class HttpClient {
         encodeURI: false,
         timeout: 8000,
         retry: 3,
-        retryDelay: 3400,
+        retryDelay: 5500,
         maxRedirects: 3,
         headers: {
           'authorization': '',
@@ -44,8 +44,8 @@ class HttpClient {
     // default headers
     this.headers = this.opts.headers;
 
-    // count 3xx redirects
-    this.redirectCounter = 0;
+    // count retries
+    this.retryCounter = 0;
   }
 
 
@@ -165,6 +165,8 @@ class HttpClient {
 
   /**
    * Sending one HTTP request to HTTP server.
+   *  - 301 redirections are not handled.
+   *  - retries are not handled
    * @param {String} url - https://www.dex8.com/contact
    * @param {String} method - GET, POST, PUT, DELETE, PATCH
    * @param {Objcet} body_obj - http body
@@ -273,32 +275,58 @@ class HttpClient {
 
 
 
+  /**
+   * Sending HTTP request to HTTP server.
+   *  - 301 redirections are handled.
+   *  - retries are handled
+   * @param {String} url - https://www.dex8.com/contact
+   * @param {String} method - GET, POST, PUT, DELETE, PATCH
+   * @param {Objcet} body_obj - http body
+   */
   async ask(url, method = 'GET', body_obj) {
-    const answer = await this.askOnce(url, method, body_obj);
+    try {
 
-    let redirectCounter = 0;
-    const answers = [answer];
+      const answer = await this.askOnce(url, method, body_obj);
 
-    /*** a) HANDLE 3XXX REDIRECTS */
-    if (!!answer && !!answer.meta && /^3\d{2}/.test(answer.meta.statusCode)) { // 300, 301, 302, ...
+      let redirectCounter = 0;
+      const answers = [answer];
 
-      if (redirectCounter <= this.opts.maxRedirects) {
-        redirectCounter++;
+      /*** a) HANDLE 3XXX REDIRECTS */
+      if (!!answer && !!answer.meta && /^3\d{2}/.test(answer.meta.statusCode)) { // 300, 301, 302, ...
 
-        // repeat request with new url
-        const url_new = answer.meta.headers.location;
-        console.log(`#${redirectCounter} redirection ${answer.meta.statusCode} from ${url} to ${url_new}`);
+        if (redirectCounter <= this.opts.maxRedirects) {
+          redirectCounter++;
 
-        const ans = await this.askOnce(url_new, method, body_obj);
-        answers.push(ans);
+          // repeat request with new url
+          const url_new = answer.meta.headers.location;
+          console.log(`#${redirectCounter} redirection ${answer.meta.statusCode} from ${url} to ${url_new}`);
 
+          const ans = await this.askOnce(url_new, method, body_obj);
+          answers.push(ans);
+        }
+
+      }
+
+      return answers;
+
+
+
+    } catch (err) {
+
+      /*** b) HANDLE RETRIES */
+      this.retryCounter++;
+
+      if (this.retryCounter <= this.opts.retry) {
+        console.log(`#${this.retryCounter} retry on ${url}`);
+        await new Promise(resolve => setTimeout(resolve, this.opts.retryDelay)); // delay before retrial
+        await this.ask(url, method = 'GET', body_obj);
+      } else {
+        throw err;
       }
 
     }
 
 
-
-    return answers;
   }
 
 
