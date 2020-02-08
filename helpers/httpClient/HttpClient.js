@@ -192,21 +192,40 @@ class HttpClient {
 
     try {
 
+      /*** 1) init HTTP request ***/
+      // http.request() options https://nodejs.org/api/http.html#http_http_request_url_options_callback
+      const requestOpts = {
+        agent,
+        hostname: this.hostname,
+        port: this.port,
+        path: this.pathname,
+        method,
+        headers: this.headers
+      };
+      const clientRequest = requestLib(requestOpts);
+
+
+      /*** 2) add body to HTTP request ***/
+      let body_str;
+      if (!!body_obj) {
+        body_str = JSON.stringify(body_obj);
+        this.headers['content-length'] = body_str.length;
+        clientRequest.write(body_str);
+      }
+
+      clientRequest.setTimeout(this.opts.timeout);
+      clientRequest.on('timeout', res => {
+        clientRequest.abort();
+        throw new Error(`Request aborted due to timeout (${this.opts.timeout} ms).`);
+      });
+
+
+
+
       const promise = new Promise ((resolve, reject) => {
 
-        // http.request() options https://nodejs.org/api/http.html#http_http_request_url_options_callback
-        const requestOpts = {
-          agent,
-          hostname: this.hostname,
-          port: this.port,
-          path: this.pathname,
-          method,
-          headers: this.headers
-        };
-        // console.log('requestOpts:: ', requestOpts);
-
-
-        const clientRequest = requestLib(requestOpts, res => {
+        /*** 3) response ***/
+        clientRequest.on('response', res => {
 
           // meta
           const meta = {
@@ -249,30 +268,20 @@ class HttpClient {
             this._killAgent(agent);
           });
 
+        });
 
-        }); // \requestLib
 
-
+        /*** 4) handle error ***/
         clientRequest.on('error', error => {
           this._killAgent(agent);
-
           const err = this._formatError(error, url);
           reject(err);
         });
 
-
-        // add body
-        let body_str;
-        if (!!body_obj) {
-          body_str = JSON.stringify(body_obj);
-          this.headers['content-length'] = body_str.length;
-          clientRequest.write(body_str);
-        }
-
-
-        clientRequest.end();
-
       });
+
+      /*** 5) finish with sending request */
+      clientRequest.end();
 
       return promise;
 
