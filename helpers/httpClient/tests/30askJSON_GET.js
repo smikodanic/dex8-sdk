@@ -1,24 +1,22 @@
 /**
- * $ node 20ask_GET.js <url>
+ * $ node 30askJSON_GET.js <url>
  */
 const util = require('util');
 const HttpClient = require('../HttpClient');
 const url = process.argv[2];
-
 console.log('asked url:: GET', url);
 
 
-const getUrl = async() => {
-
+const getJSON = async() => {
   const opts = {
     encodeURI: false,
-    timeout: 8000,
-    retry: 3,
-    retryDelay: 5500,
-    maxRedirects: 3,
+    timeout: 3000,
+    retry: 1,
+    retryDelay: 1300,
+    maxRedirects: 0,
     headers: {
       'authorization': '',
-      'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36', // 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
       'accept': '*/*', // 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
       'cache-control': 'no-cache',
       'host': '',
@@ -28,10 +26,9 @@ const getUrl = async() => {
     }
   };
 
-
   try {
-    const dhc = new HttpClient(opts); // dex8 http client instance
-    const answer = await dhc.ask(url);
+    const dhc = new HttpClient(opts);
+    const answer = await dhc.askJSON(url);
 
     console.log('answer:');
     console.log(util.inspect(answer, false, 3, true));
@@ -42,7 +39,7 @@ const getUrl = async() => {
 };
 
 
-getUrl().catch(console.error);
+getJSON().catch(console.error);
 
 
 

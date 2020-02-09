@@ -9,7 +9,7 @@ const httpClient = new HttpClient();
 console.log('headers_before:: ', httpClient.getHeaders());
 
 httpClient.setHeaders({
-  'content-type': 'application/json',
+  'content-type': 'application/json; charset=utf-8',
   'accept': 'application/json'
 });
 

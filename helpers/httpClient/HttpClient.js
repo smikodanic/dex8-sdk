@@ -14,6 +14,7 @@ class HttpClient {
    * @param {Object} opts - HTTP Client options {timeout, retry, maxRedirects, headers, encodeURI}
    */
   constructor(opts) {
+    this.url;
     this.protocol = 'http:';
     this.hostname = '';
     this.port = 80;
@@ -59,11 +60,12 @@ class HttpClient {
   _parseUrl(url) {
     url = this._correctUrl(url);
     const urlObj  = new URL(url);
+    this.url = url;
     this.protocol = urlObj.protocol;
     this.hostname = urlObj.hostname;
     this.port = urlObj.port;
     this.pathname = urlObj.pathname;
-    return urlObj;
+    return url;
   }
 
 
@@ -141,12 +143,15 @@ class HttpClient {
 
   /**
    * Beautify error messages.
-   * @param {Error} error
+   * @param {Error} error - original error
+   * @return formatted error
    */
   _formatError(error, url) {
     // console.log(error);
     const err = new Error(error);
 
+
+    // reformatting NodeJS errors
     if (error.code === 'ENOTFOUND') {
       err.status = 400;
       err.message = `400 Bad Request [ENOTFOUND] ${url}`;
@@ -156,14 +161,23 @@ class HttpClient {
     } else if (error.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
       err.status = 400;
       err.message = `400 Bad Request [ERR_TLS_CERT_ALTNAME_INVALID] ${error.reason}`;
+    } else if (error.status === 404) {
+      err.status = 404;
+      err.message = `404 Not Found ${url}`;
+    } else {
+      err.status = error.status || 400;
+      err.message = error.message;
     }
 
-    return err;
+    err.original = error;
+
+    return err; // formatted error is returned
   }
 
 
-  /********** REQUESTS *********/
 
+
+  /********** REQUESTS *********/
 
   /**
    * Sending one HTTP request to HTTP server.
@@ -174,7 +188,7 @@ class HttpClient {
    * @param {Objcet} body_obj - http body
    */
   askOnce(url, method = 'GET', body_obj) {
-    this._parseUrl(url);
+    url = this._parseUrl(url);
     const agent = this._hireAgent(this.opts);
     const requestLib = this._selectRequest();
 
@@ -215,16 +229,6 @@ class HttpClient {
         /*** 3) response ***/
         clientRequest.on('response', res => {
 
-          // meta
-          const meta = {
-            statusCode: res.statusCode,
-            statusMessage: res.statusMessage,
-            httpVersion: res.httpVersion,
-            headers: res.headers,
-            gzip: false,
-            https: /^https/.test(this.protocol)
-          };
-
           // collect raw data e.g. buffer data
           const buf_chunks = [];
           res.on('data', (buf_chunk) => {
@@ -237,19 +241,68 @@ class HttpClient {
             const buf = Buffer.concat(buf_chunks);
 
             // decompress
+            let gzip = false;
             let gunziped = buf;
             if (!!res.headers['content-encoding'] && res.headers['content-encoding'] === 'gzip') {
               gunziped = zlib.gunzipSync(buf);
-              meta.gzip = true;
+              gzip = true;
             }
 
             // convert binary (buffer) to string
-            const content = gunziped.toString();
+            let content = gunziped.toString();
 
-            const answer = {meta, content};
-            resolve(answer);
+            // convert string to object if content is in JSON format
+            let contentObj;
+            try {
+              contentObj = JSON.parse(content);
+              if (!!contentObj) {
+                content = contentObj;
+              }
+            } catch(err) {}
+
+
+
+            // format answer
+            const answer = {
+              requestURL: url,
+              requestMethod: method,
+              status: res.statusCode,
+              // remoteAddress: // TODO
+              // referrerPolicy: // TODO
+              statusMessage: res.statusMessage,
+              httpVersion: res.httpVersion,
+              gzip,
+              https: /^https/.test(this.protocol),
+              req: {
+                headers: this.headers,
+                payload: body_obj
+              },
+              res: {
+                headers: res.headers,
+                content
+              }
+            };
+
+
+            if (!!answer && /^4\d{2}/.test(answer.status)) {
+              const errmsg = answer.res.content.message || 'Status code 4xx (client error)';
+              const error = new Error(errmsg);
+              error.status = answer.status;
+              const err = this._formatError(error, url);
+              reject(err);
+            } else if (!!answer && /^5\d{2}/.test(answer.status)) {
+              const errmsg = answer.res.content.message || 'Status code 4xx (server error)';
+              const error = new Error(errmsg);
+              error.status = answer.status;
+              const err = this._formatError(error, url);
+              reject(err);
+            } else {
+              resolve(answer); // good answer will have 2xx status
+            }
+
 
             this._killAgent(agent);
+
           });
 
         });
@@ -288,29 +341,26 @@ class HttpClient {
   async ask(url, method = 'GET', body_obj) {
     try {
 
-      const answer = await this.askOnce(url, method, body_obj);
-
-      let redirectCounter = 0;
+      let answer = await this.askOnce(url, method, body_obj);
       const answers = [answer];
 
+      let redirectCounter = 1;
+
+
       /*** a) HANDLE 3XXX REDIRECTS */
-      if (!!answer && !!answer.meta && /^3\d{2}/.test(answer.meta.statusCode)) { // 300, 301, 302, ...
+      while (!!answer && /^3\d{2}/.test(answer.status) && redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
 
-        if (redirectCounter <= this.opts.maxRedirects) {
-          redirectCounter++;
+        // repeat request with new url
+        const url_new = answer.res.headers.location;
+        console.log(`#${redirectCounter} redirection ${answer.status} from ${this.url} to ${url_new}`);
+        answer = await this.askOnce(url_new, method, body_obj);
 
-          // repeat request with new url
-          const url_new = answer.meta.headers.location;
-          console.log(`#${redirectCounter} redirection ${answer.meta.statusCode} from ${url} to ${url_new}`);
+        answers.push(answer);
 
-          const ans = await this.askOnce(url_new, method, body_obj);
-          answers.push(ans);
-        }
-
+        redirectCounter++;
       }
 
       return answers;
-
 
 
     } catch (err) {
@@ -319,7 +369,7 @@ class HttpClient {
       this.retryCounter++;
 
       if (this.retryCounter <= this.opts.retry) {
-        console.log(`#${this.retryCounter} retry on ${url}`);
+        console.log(`#${this.retryCounter} retry on ${this.url}`);
         await new Promise(resolve => setTimeout(resolve, this.opts.retryDelay)); // delay before retrial
         await this.ask(url, method = 'GET', body_obj);
       } else {
@@ -333,9 +383,43 @@ class HttpClient {
 
 
 
-  async askJSON (url, method = 'GET', body_obj) {
+  /**
+   *
+   * @param {String} url - https://api.dex8.com/contact
+   * @param {String} method - GET, POST, PUT, DELETE, PATCH
+   * @param {Object|String} body - http body as Object or String type
+   */
+  async askJSON(url, method = 'GET', body) {
+
+    // convert body string to object
+    let body_obj = body;
+    if (typeof body === 'string') {
+      try {
+        body_obj = JSON.parse(body);
+      } catch (err) {
+        throw new Error('Body string is not valid JSON.');
+      }
+    }
+
+
     try {
-      const answers = await this.ask(url, method = 'GET', body_obj);
+      this.setHeaders({
+        'content-type': 'application/json; charset=utf-8',
+        'accept': 'application/json'
+      });
+
+      const answer = await this.askOnce(url, method, body_obj);
+
+      // convert content string to object
+      if (!!answer.content) {
+        try {
+          answer.content = JSON.parse(answer.content);
+        } catch (err) {
+          throw new Error('Response content is not valid JSON.');
+        }
+      }
+
+      return answer;
 
     } catch (err) {
       throw (err);
