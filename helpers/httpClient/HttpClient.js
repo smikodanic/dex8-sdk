@@ -49,6 +49,9 @@ class HttpClient {
   }
 
 
+
+  /********** PRIVATES *********/
+
   /**
    * Parse url.
    * @param {String} url - http://www.adsuu.com/some/thing.php?x=2&y=3
@@ -141,26 +144,25 @@ class HttpClient {
    * @param {Error} error
    */
   _formatError(error, url) {
+    // console.log(error);
     const err = new Error(error);
 
     if (error.code === 'ENOTFOUND') {
       err.status = 400;
-      err.message = `400 Bad Request ${url}`;
+      err.message = `400 Bad Request [ENOTFOUND] ${url}`;
+    } else if (error.code === 'ECONNREFUSED') {
+      err.status = 400;
+      err.message = `400 Bad Request [ECONNREFUSED] ${url}`;
+    } else if (error.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
+      err.status = 400;
+      err.message = `400 Bad Request [ERR_TLS_CERT_ALTNAME_INVALID] ${error.reason}`;
     }
 
     return err;
   }
 
 
-
-  /**
-   * Change header object.
-   * this.headers properties will be overwritten.
-   * @param {Object} headerObj - {'authorization', 'user-agent', accept, 'cache-control', 'host', 'accept-encoding', 'connection'}
-   */
-  headers(headerObj) {
-    this.headers = Object.assign(this.headers, headerObj);
-  }
+  /********** REQUESTS *********/
 
 
   /**
@@ -328,6 +330,62 @@ class HttpClient {
 
 
   }
+
+
+
+  async askJSON (url, method = 'GET', body_obj) {
+    try {
+      const answers = await this.ask(url, method = 'GET', body_obj);
+
+    } catch (err) {
+      throw (err);
+    }
+  }
+
+
+
+
+  /********** HEADERS *********/
+
+  /**
+   * Change header object.
+   * Previously defined this.headers properties will be overwritten.
+   * @param {Object} headerObj - {'authorization', 'user-agent', accept, 'cache-control', 'host', 'accept-encoding', 'connection'}
+   */
+  setHeaders(headerObj) {
+    this.headers = Object.assign(this.headers, headerObj);
+  }
+
+  /**
+   * Set (add/update) header.
+   * Previously defined header will be overwritten.
+   * @param {String} headerName - 'content-type'
+   * @param {String} headerValue - 'text/html; charset=UTF-8'
+   */
+  setHeader(headerName, headerValue) {
+    const headerObj = {[headerName]: headerValue};
+    this.headers = Object.assign(this.headers, headerObj);
+  }
+
+  /**
+   * Change header object.
+   * @param {Array} headerNames - array of header names    ['content-type', 'accept']
+   */
+  delHeaders(headerNames) {
+    headerNames.forEach(headerName => {
+      delete this.headers[headerName];
+    });
+  }
+
+
+  /**
+   * Get active headers
+   */
+  getHeaders() {
+    return this.headers;
+  }
+
+
 
 
 
