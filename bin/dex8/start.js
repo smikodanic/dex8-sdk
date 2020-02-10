@@ -55,12 +55,12 @@ module.exports = async (optionsObj) => {
 
 
 
-  /**** 3) send START message to console ****/
+  /**** 4) send START message to console ****/
   echo.log(`Task "${task_title}" started on ${shortNow()}`);
 
 
 
-  /**** 4) GET main & input ****/
+  /**** 5) GET main & input ****/
   const mainPath = path.join(process.cwd(), 'main.js');
   const mainExists = await fse.pathExists(mainPath);
   if (!mainExists) { console.log(chalk.red(`Task "${task_title}" does not have "main.js" file.`)); return;}
