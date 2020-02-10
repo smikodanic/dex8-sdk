@@ -9,7 +9,7 @@ const args = process.argv;
 const login = require('./login.js');
 const init = require('./init.js');
 const del = require('./del.js');
-
+const start = require('./start.js');
 
 
 
@@ -50,6 +50,18 @@ program
   .alias('delete')
   .description('Delete a task. Be careful with this !!!')
   .action(del);
+
+
+/**
+ * Start DEX8 task
+ * $dex8 start
+ */
+program
+  .command('start')
+  .option('-s, --short', 'Prints compact and short output.')
+  .option('-i, --input <inp>', 'Select input file, for example "my_input.js".')
+  .description('Start DEX8 task.')
+  .action(start);
 
 
 

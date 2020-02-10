@@ -1,5 +1,6 @@
 module.exports = async (input, lib) => {
   const ff = lib.ff;
+  ff.setOpts({debug: true, msDelay: 2100});
   const echo = lib.echo;
 
   echo.log('   a = ', input.a);

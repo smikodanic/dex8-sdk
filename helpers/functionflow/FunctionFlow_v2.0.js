@@ -38,6 +38,18 @@ class FunctionFlow {
 
 
 
+  /*============================== OPTIONS ==============================*/
+  /**
+   * Set FunctionFlow options.
+   * @param {Object} opts - {debug, msDelay}
+   */
+  setOpts(opts) {
+    this.debug = opts.debug;
+    this.msDelay = opts.msDelay;
+  }
+
+
+
   /*============================== INPUT - this.x ==============================*/
   /**
    * Inject input into function first parameter - func(x, lib)
@@ -361,7 +373,7 @@ class FunctionFlow {
    */
   delay(msDelay) {
     this.delayRemove(); // initially remove previous delays
-    this._debugger3(this.delay.name, msDelay);
+    if (this.debug) { this._debugger3(this.delay.name, msDelay); }
 
     const promis = new Promise(resolve => {
       this.delayID = setTimeout(resolve, msDelay); // keep promis in 'pending' state until setTimeout is not finished
