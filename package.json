@@ -24,7 +24,8 @@
   "directories": {
     "bin": "./bin",
     "lib": "./helpers",
-    "example": "./tasks"
+    "example": "./tasks",
+    "test": "./tests"
   },
   "main": "index.js",
   "types": "types/index.d.ts",
@@ -47,6 +48,7 @@
     "got": "^9.6.0",
     "inquirer": "^7.0.4",
     "moment": "^2.24.0",
+    "mongoose": "^5.8.11",
     "puppeteer": "^1.11.0",
     "rootpath": "^0.1.2"
   }
