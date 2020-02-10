@@ -43,13 +43,11 @@
     "bluebird": "^3.5.5",
     "chalk": "^2.4.1",
     "cheerio": "^1.0.0-rc.2",
-    "dex8-lib": "^1.0.0",
     "fs-extra": "^7.0.1",
     "got": "^9.6.0",
     "inquirer": "^7.0.4",
     "moment": "^2.24.0",
     "mongoose": "^5.8.11",
-    "puppeteer": "^1.11.0",
-    "rootpath": "^0.1.2"
+    "puppeteer": "^1.11.0"
   }
 }
