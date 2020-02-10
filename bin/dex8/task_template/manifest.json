@@ -1,0 +1,12 @@
+{
+  "title": "first_task",
+  "description": "First task description ...",
+  "thumbnail": "http://",
+  "category": "demo",
+  "files": [
+    {"name": "main.js"},
+    {"name": "input.js"},
+    {"name": "settings.js"}
+  ],
+  "howto": ""
+}

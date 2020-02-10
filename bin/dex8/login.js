@@ -8,7 +8,7 @@ module.exports = async () => {
 
   const questions = [
     { type: 'input', name: 'username', message: 'username:', default: '' },
-    { type: 'input', name: 'password', message: 'password', default: '' }
+    { type: 'password', name: 'password', message: 'password', default: '' }
   ];
 
   try {
@@ -40,7 +40,7 @@ module.exports = async () => {
 
 
     // create config file
-    const filePath = path.join(__dirname, '../../conf.js');
+    const filePath = path.join(process.cwd(), 'conf.js');
     const fileContent = 'module.exports = ' + JSON.stringify(answer.res.content, null, 2);
     await fse.ensureFile(filePath);
     await fse.writeFile(filePath, fileContent, {encoding: 'utf8'} );
