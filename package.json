@@ -2,21 +2,42 @@
   "name": "dex8-sdk",
   "version": "2.0.0",
   "title": "DEX8 SDK",
-  "description": "DEX8 SDK for DEX8 platform.",
-  "main": "./index.js",
-  "scripts": {
-    "inst": "rm -rf node_modules && export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false && npm install"
-  },
+  "description": "DEX8 SDK is a library which helps developers to create DEX8 crawler, scraper tasks or automated serverless scripts.",
   "keywords": [
+    "dex8",
+    "sdk",
     "crawler",
     "scraper",
     "robot",
+    "spider",
     "data extraction",
-    "dex8",
-    "sdk"
+    "serverless",
+    "automation tool"
   ],
-  "author": "Sasa Mikodanic (Cloud jdoo)",
-  "license": "MIT",
+  "homepage": "https://dex8.com",
+  "author": "Saša Mikodanić <smikodanic@gmail.com> (http://mikosoft.info)",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:smikodanic/dex8-sdk.git"
+  },
+  "directories": {
+    "bin": "./bin",
+    "lib": "./helpers",
+    "example": "./tasks"
+  },
+  "main": "index.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "inst": "rm -rf node_modules && export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false && npm install",
+    "inst2": "rm -rf node_modules && npm install"
+  },
+  "bin": {
+    "dex8": "./bin/dex8"
+  },
+  "engines": {
+    "node": ">=10.4.1"
+  },
   "dependencies": {
     "bluebird": "^3.5.5",
     "chalk": "^2.4.1",
