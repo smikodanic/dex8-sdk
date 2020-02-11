@@ -185,7 +185,7 @@ class HttpClient {
    *  - retries are not handled
    * @param {String} url - https://www.dex8.com/contact
    * @param {String} method - GET, POST, PUT, DELETE, PATCH
-   * @param {Objcet} body_obj - http body
+   * @param {Object} body_obj - http body payload
    */
   askOnce(url, method = 'GET', body_obj) {
     url = this._parseUrl(url);
@@ -208,8 +208,9 @@ class HttpClient {
 
 
       /*** 2) add body to HTTP request ***/
-      let body_str;
-      if (!!body_obj) {
+      let body_str, payload;
+      if (!!body_obj && !/GET/i.test(method)) {
+        payload = body_obj;
         body_str = JSON.stringify(body_obj);
         this.headers['content-length'] = body_str.length;
         clientRequest.write(body_str);
@@ -275,7 +276,7 @@ class HttpClient {
               https: /^https/.test(this.protocol),
               req: {
                 headers: this.headers,
-                payload: body_obj
+                payload
               },
               res: {
                 headers: res.headers,
