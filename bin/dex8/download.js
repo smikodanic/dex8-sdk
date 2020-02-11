@@ -1,45 +1,53 @@
 /**
- * Download DEX8 task from command line:
- * =====================================================
- * $ node download <task_id>
- * =====================================================
- * For example: $ node download 5ca624999f940fb607901836
+ * Download DEX8 task.
+ * $ dex8 download <task_id>
  */
 const fse = require('fs-extra');
 const chalk = require('chalk');
 const path = require('path');
-const requestHTTP = require('./requestHTTP.js');
-const conf = require('./conf.js');
+const { HttpClient } = require('../../index.js');
+const config = require('../../config.js');
 
 
 
-const download = async () => {
+module.exports = async (task_id) => {
+  const taskFolder = process.cwd();
 
-  ///// 1) get task
-  const task_id = process.argv[2]; // 5ca624999f940fb607901836
-  if (!task_id) { throw new Error('task_id is not defined.'); }
+  /*** 1) get conf.js  (which is created after successful login) ***/
+  const confPath = path.join(taskFolder, 'conf.js');
+  const tf = await fse.pathExists(confPath);
+  if (!tf) { throw new Error(`File "conf.js" is not created. Please login.`); }
+  const conf = require(confPath);
 
-  const url = conf.api.base_url + `/customer/tasks/download/terminal/${task_id}`;
-  const Authorization = conf.api.authorization;
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization
+  /*** 2) send API request to /sdk/download/:task_id ***/
+  // init httpClient
+  const opts = {
+    encodeURI: false,
+    timeout: 3000,
+    retry: 1,
+    retryDelay: 1300,
+    maxRedirects: 0,
+    headers: {
+      'authorization': conf.jwtToken,
+      'user-agent': 'DEX8-SDK',
+      'accept': 'application/json', // 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+      'cache-control': 'no-cache',
+      'host': '',
+      'accept-encoding': 'gzip',
+      'connection': 'close', // keep-alive
+      'content-type': 'application/json; charset=UTF-8'
+    }
   };
+  const dhc = new HttpClient(opts);
 
-  const httpResp = await requestHTTP(url, 'GET', headers); // {meta, data}
-  if (!!httpResp && !!httpResp.data && !!httpResp.data.stack) {
-    throw new Error(httpResp.data.message);
-  }
+  // send POST /sdk/login request
+  const url = `${config.apiBaseURL}/sdk/download/${task_id}`;
+  const answer = await dhc.askJSON(url, 'GET', {});
+  // console.log(answer);
 
-  const task = httpResp.data.task;
-  const files = httpResp.data.files;
+  const task = answer.res.content.task;
+  const files = answer.res.content.files;
   if (!task) { throw new Error(`Task ${task_id} does not exists.`); }
-
-
-
-  ///// 2) remove task folder if already exists
-  const taskFolder = path.join(__dirname, task.category, task.title);
-  await fse.remove(taskFolder);
 
 
 
@@ -100,15 +108,5 @@ const download = async () => {
   return Promise.all(promisesF).catch(err => console.log(err));
 
 };
-
-
-download()
-  .then((res) => {
-    console.log(chalk.green('Task files are downloaded.'));
-  })
-  .catch(err => {
-    console.log(chalk.red(err.message));
-    console.log(err);
-  });
 
 

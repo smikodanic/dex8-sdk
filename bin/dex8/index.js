@@ -12,6 +12,7 @@ const init = require('./init.js');
 const del = require('./del.js');
 const start = require('./start.js');
 const upload = require('./upload.js');
+const download = require('./download.js');
 
 
 
@@ -96,15 +97,14 @@ program
 
 /**
  * Download DEX8 task
- * $dex8 download   - downlaod task from current working directory
+ * $dex8 download <task_id> - downlaod task to current working directory
+ * "task_id" is mongoDB ObjectId , for example: 5e20355c72cdfa2127619493
  */
 program
-  .command('download')
+  .command('download <task_id>')
   .alias('d')
   .description('Download DEX8 task.')
-  .option('-t, --task <taskName>', 'Download a task defined by name.')
-  .option('-i, --id <task_id>', 'Download a task defined by _id.')
-  .action(upload);
+  .action(download);
 
 
 

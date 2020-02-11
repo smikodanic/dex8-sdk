@@ -114,7 +114,7 @@ const uploadOneTask = async (taskName) => {
     const dhc = new HttpClient(opts);
 
     // send POST /sdk/login request
-    const url = config.apiBaseURL + '/customer/tasks/upload';
+    const url = config.apiBaseURL + '/sdk/upload';
     const answer = await dhc.askJSON(url, 'POST', body);
 
     console.log(chalk.green(answer.res.content.msg));

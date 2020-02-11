@@ -4,7 +4,6 @@
  * $ dex8 upload -t <taskName>      -> if we are above task folder
  */
 const fse = require('fs-extra');
-const path = require('path');
 const uploadOneTask = require('./uploadOneTask');
 
 
@@ -18,13 +17,11 @@ module.exports = async (optionsObj) => {
     uploadOneTask(taskName);
   } else {
 
-    ///// 1) get task_names e.g. folder names
+    /*** 1) get task_names e.g. folder names ***/
     const folders = await fse.readdir('./');
     // console.log('folders:: ', folders);
 
-
-
-    ///// 2) uploading tasks one by one
+    /*** 2) uploading tasks one by one ***/
     let i = 1;
     for (const taskName of folders) {
       console.log(`\n============== ${i}. Uploading task "${taskName}" ... ==============`);
