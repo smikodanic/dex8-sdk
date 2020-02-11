@@ -32,7 +32,7 @@ module.exports = async (optionsObj) => {
       try {
         await uploadOneTask(taskName);
       } catch(err) {
-        console.log(err);
+        // console.log(err);
       }
 
       i++;

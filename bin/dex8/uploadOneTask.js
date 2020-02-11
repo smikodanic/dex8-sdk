@@ -32,6 +32,8 @@ const uploadOneTask = async (taskName) => {
     const tf2 = await fse.pathExists(taskFolder);
     if (!tf2) { throw new Error(`Folder "${taskFolder}" does not exists.`); }
 
+    const tf3 = await fse.pathExists(`${taskFolder}/conf.js`);
+    if (!tf3) { throw new Error(`File "conf.js" is not created. Please login.`); }
     const conf = require(`${taskFolder}/conf.js`);
     console.log(`username: ${conf.username} (${conf.user_id})`);
     // console.log('conf:: ', conf);
@@ -116,6 +118,8 @@ const uploadOneTask = async (taskName) => {
     const answer = await dhc.askJSON(url, 'POST', body);
 
     console.log(chalk.green(answer.res.content.msg));
+
+    await new Promise(resolve => setTimeout(resolve, 1300));
 
 
   } catch(err) {

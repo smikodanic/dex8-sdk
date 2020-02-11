@@ -7,6 +7,7 @@ const args = process.argv;
 
 
 const login = require('./login.js');
+const logout = require('./logout.js');
 const init = require('./init.js');
 const del = require('./del.js');
 const start = require('./start.js');
@@ -25,13 +26,24 @@ program
 
 
 /**
- *Login with username:password and if succesful create ./conf.js config file.
+ * Login with username:password and if successful create "conf.js" config file.
  * $dex8 login
  */
 program
   .command('login')
-  .description('Login to DEX8 web panel and get JWT.')
+  .description('Login to DEX8 platform and create "conf.js".')
   .action(login);
+
+
+/**
+ * Logout e.g. delete "conf.js" file.
+ * It is recommended to logout when developer finish with development job because "conf.js" file will be deleted with all sensitive data.
+ * $dex8 login
+ */
+program
+  .command('logout')
+  .description('Logout e.g. delete "conf.js" file.')
+  .action(logout);
 
 
 /**
