@@ -12,11 +12,10 @@ module.exports = async (taskName) => {
   try {
     const answers =  await inquirer.prompt(questions); // true/false
 
-    // define director to be removed
-    let dir = path.join(process.cwd(), taskName);
+    // define directory to be removed
+    let dir = path.join(process.cwd(), taskName); // if current working directory (cwd) is above task folder
     const tf1 = await fse.pathExists(dir);
-
-    if (!tf1) { dir = path.join(process.cwd(), `../${taskName}`); }
+    if (!tf1) { dir = path.join(process.cwd(), `../${taskName}`); } // if current working directory (cwd) is in the task folder
 
 
     if (answers.tf) {

@@ -2,6 +2,7 @@ const inquirer = require('inquirer');
 const path = require('path');
 const fse = require('fs-extra');
 const { HttpClient } = require('../../index.js');
+const config = require('../../config.js');
 
 
 module.exports = async () => {
@@ -34,7 +35,7 @@ module.exports = async () => {
     const dhc = new HttpClient(opts);
 
     // send POST /sdk/login request
-    const url = 'http://localhost:8001/sdk/login';
+    const url = config.apiBaseURL + '/sdk/login';
     const body =  await inquirer.prompt(questions); // {username, passsword}
     const answer = await dhc.askJSON(url, 'POST', body);
 
