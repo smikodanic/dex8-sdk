@@ -147,8 +147,8 @@ module.exports = async (task_id) => {
 
 
     /*** 7) create hidden file .gitignore ***/
-    console.log('Creating .gitignbore');
-    const gitignoreContent = await fse.readFile(path.join(__dirname, 'task_template/.gitignore'));
+    console.log('Creating .gitignore');
+    const gitignoreContent = await fse.readFile(path.join(__dirname, 'task_template/gitignore'));
     const filePath5 = path.join(taskFolder, '.gitignore');
     const promis5 = fse.ensureFile(filePath5).then(() => fse.writeFile(filePath5, gitignoreContent, {encoding:'utf8', flag:'w'}));
     promisesF.push(promis5);

@@ -62,8 +62,9 @@ program
  * $dex8 del <taskName>
  */
 program
-  .command('del <taskName>')
-  .alias('delete')
+  .command('delete <taskName>')
+  .alias('del')
+  .alias('rm')
   .description('Delete a task. Be careful with this command !!!')
   .action(del);
 
