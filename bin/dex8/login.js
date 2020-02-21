@@ -34,6 +34,7 @@ module.exports = async () => {
     };
     const dhc = new HttpClient(opts);
 
+
     // send POST /sdk/login request
     const url = config.apiBaseURL + '/sdk/login';
     const body =  await inquirer.prompt(questions); // {username, passsword}

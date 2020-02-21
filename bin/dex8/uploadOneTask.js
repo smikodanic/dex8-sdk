@@ -96,7 +96,7 @@ const uploadOneTask = async (taskName) => {
     // init httpClient
     const opts = {
       encodeURI: false,
-      timeout: 3000,
+      timeout: 13000,
       retry: 1,
       retryDelay: 1300,
       maxRedirects: 0,
