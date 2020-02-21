@@ -1,8 +1,0 @@
-{
-  "title": "localhost/dex8-pool-01",
-  "username": "ms_user",
-  "password": "12345",
-  "host_port": "127.0.0.1:27017",
-  "dbname": "dex8-pool-01",
-  "options": ""
-}
