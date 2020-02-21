@@ -2,6 +2,7 @@
  * Upload DEX8 task from command line.
  * $ dex8 upload                    -> if we are in the task folder
  * $ dex8 upload -t <taskName>      -> if we are above task folder
+ * $ dex8 upload --all               -> if we are above task folder
  */
 const fse = require('fs-extra');
 const uploadOneTask = require('./uploadOneTask');
@@ -24,12 +25,15 @@ module.exports = async (optionsObj) => {
     /*** 2) uploading tasks one by one ***/
     let i = 1;
     for (const taskName of folders) {
-      console.log(`\n============== ${i}. Uploading task "${taskName}" ... ==============`);
+      if (taskName !== 'conf.js' && taskName !== '.git' && taskName !== '.gitignore') {
+        console.log(`\n============== ${i}. Uploading task "${taskName}" ... ==============`);
 
-      try {
-        await uploadOneTask(taskName);
-      } catch(err) {
+        try {
+          await uploadOneTask(taskName);
+        } catch(err) {
         // console.log(err);
+        }
+
       }
 
       i++;

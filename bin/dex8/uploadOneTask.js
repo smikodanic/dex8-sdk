@@ -21,6 +21,7 @@ const uploadOneTask = async (taskName) => {
       taskFolder = process.cwd();
     }
 
+
     // check if taskFolder is folder
     const stat = await fse.lstat(taskFolder);
     if (stat.isFile()) { throw new Error(`"${taskFolder}" is a file and should be folder.`); }
@@ -32,21 +33,44 @@ const uploadOneTask = async (taskName) => {
     const tf2 = await fse.pathExists(taskFolder);
     if (!tf2) { throw new Error(`Folder "${taskFolder}" does not exists.`); }
 
-    const tf3 = await fse.pathExists(`${taskFolder}/conf.js`);
-    if (!tf3) { throw new Error(`File "conf.js" is not created. Please login.`); }
-    const conf = require(`${taskFolder}/conf.js`);
+
+    // define path to conf.js
+    let confPath;
+    const tf3 = await fse.pathExists(path.join(taskFolder, 'conf.js'));
+    if (tf3) {
+      confPath = path.join(taskFolder, 'conf.js');
+    } else {
+      const tf4 = await fse.pathExists(path.join(taskFolder, '../', 'conf.js')); // watch in up directory
+      if (tf4) {
+        confPath = path.join(taskFolder, '../', 'conf.js');
+      } else { throw new Error(`File "conf.js" is not created. Please login.`); }
+    }
+
+
+    const conf = require(confPath);
     console.log(`username: ${conf.username} (${conf.user_id})`);
     // console.log('conf:: ', conf);
 
     /*** 1) get files for upload ***/
     const upfiles = await fse.readdir(taskFolder);
     // console.log('upfiles:: ', upfiles);
+    /*
+upfiles::  [
+  '.editorconfig',
+  '.eslintrc',
+  '.gitignore',
+  'conf.js',
+  'howto.html',
+  'input111.js',
+  'input222.js',
+  'main.js',
+  'manifest.json' ]
+    */
 
     /*** 2) read manifest ***/
     const manifestPath = path.join(taskFolder, 'manifest.json');
     const manifest = await fse.readJson(manifestPath);
     // console.log(manifest);
-
 
     /*** 3) checks ***/
     // check if files contain 'manifest.json' file
@@ -63,6 +87,7 @@ const uploadOneTask = async (taskName) => {
 
     /*** 4) define "body" payload, object which will be sent to API ***/
     const body = manifest;
+    body.files = []; // init body.files array
     for (let i = 0; i < upfiles.length; i++) {
       const fileName = upfiles[i]; // ['fileName']
       console.log('Reading ', fileName);
@@ -73,13 +98,8 @@ const uploadOneTask = async (taskName) => {
 
           if (fileName === 'howto.html') { // howto.html
             body.howto = fileContent;
-          } else if (/.+\.js$/.test(fileName)) { // js files
-            body.files = body.files.map(f => {
-              if (f.name === fileName) {
-                f.content = fileContent;
-              }
-              return f;
-            });
+          } else if (/.+\.js$/.test(fileName) && fileName !== 'conf.js' && !!fileContent) { // js files except conf.js which doesn't have empty content
+            body.files.push({name: fileName, content: fileContent});
           }
 
         })
