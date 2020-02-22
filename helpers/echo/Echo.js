@@ -81,6 +81,18 @@ class Echo {
    * @returns {Promise<any>} - can be used in async function as "await echo.log()"
    */
   log(...messages) { // ... is "rest parameters" operator
+    // if message is object then convert it into string
+    messages = messages.map(message => {
+      if (typeof message === 'object') {
+        try {
+          message = JSON.stringify(message, null, 2);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+      return message;
+    });
+
     const msg = messages.join(' '); // join with space  ::  echo.msg('a', 'b') ---> ['a', 'b'] ---> 'a b'
     this._format(msg, null, null);
     this._log();

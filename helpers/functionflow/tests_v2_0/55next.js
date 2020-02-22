@@ -10,7 +10,7 @@ const f1 = (x, lib) => {
 const f2 = (x, lib) => {
   const ff = lib.ff;
   console.log('f2', x);
-  ff.next(10);
+  ff.next();
   return x + 1;
 };
 

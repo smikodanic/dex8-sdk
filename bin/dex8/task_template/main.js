@@ -1,12 +1,18 @@
-module.exports = async (input, lib) => {
-  const ff = lib.ff;
-  ff.setOpts({debug: true, msDelay: 2100});
-  const echo = lib.echo;
+const f1 = require('./f1');
 
-  echo.log('   a = ', input.a);
-  await ff.delay(1300);
-  echo.log(input.password, input.password_1, input.MyPAssword_1, input.PasswordNotExists);
+
+module.exports = async (input, lib) => {
+  const echo = lib.echo;
+  const ff = lib.ff;
+  ff.setOpts({debug: false, msDelay: 1200});
+  ff.xInject(input);
+  ff.libInject(lib);
+
+  echo.log('input::', input);
+
+  const y = await ff.one(f1);
   await ff.delay(3400);
 
-  return input;
+  echo.log('output::', y);
+  return y; // or return ff.x;
 };

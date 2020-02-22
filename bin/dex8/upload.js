@@ -6,6 +6,7 @@
  */
 const fse = require('fs-extra');
 const uploadOneTask = require('./uploadOneTask');
+const chalk = require('chalk');
 
 
 module.exports = async (optionsObj) => {
@@ -27,16 +28,16 @@ module.exports = async (optionsObj) => {
     for (const taskName of folders) {
       if (taskName !== 'conf.js' && taskName !== '.git' && taskName !== '.gitignore') {
         console.log(`\n============== ${i}. Uploading task "${taskName}" ... ==============`);
+        i++;
 
         try {
           await uploadOneTask(taskName);
         } catch(err) {
-        // console.log(err);
+          console.log(chalk.red(err.message));
         }
 
       }
 
-      i++;
     }
 
   }
