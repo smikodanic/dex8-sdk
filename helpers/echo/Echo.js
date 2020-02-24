@@ -1,14 +1,15 @@
 /**
- * DEX8 library for sending messages, objekts and errors.
- * Socket message format:
+ * DEX8 library for sending messages, objekts and errors via websocket or to console.
+ * Echo, websocket message format:
  * {
  *  user_id,
  *  robot_id,
  *  task_id,
- *  msg: string,
+ *  str: string,
  *  obj: {uri: string, body: any},
  *  err: {message: string, stack: string},
- *  time: Date
+ *  time: string,
+ *  room: string
  * }
  */
 
@@ -27,9 +28,6 @@ class Echo {
     this.robot_id = robot_id;
     this.task_id = task_id;
 
-    // time when task is started
-    const time_start = moment().toISOString();
-
     // short console log -> string message instead of whole object in __console_log() method
     this.short = false;
 
@@ -38,17 +36,17 @@ class Echo {
       user_id,
       robot_id,
       task_id,
-      msg: undefined,
+      str: undefined,
       obj: undefined,
       err: undefined,
       time: '',
-      time_start
+      room
     };
   }
 
 
   /**
-   * Change room for echo messages, objekts or errors.
+   * Change room for echo strings, objekts or errors.
    * For example: echo.changeRoom('room_apiRoutes).objekt({uri: '/deployments/modify/5e08907172cdfa212761907d', body: {action: stop}});
    * @param {String} room - new room
    */
@@ -60,41 +58,41 @@ class Echo {
 
 
   /**
-   * Method used in task functions as echo.send({msg: string, obj: any, err: Error, time: Date});
+   * Method used in task functions as echo.send({str: string, obj: any, err: Error, time: Date});
    * Send message object.
-   * @param {Object} echoObj - {msg, obj, err}
+   * @param {Object} echoObj - {str, obj, err}
    * @returns {Promise<any>} - can be used in async function as "await echo.send()"
    */
   send(echoObj) {
-    const {msg, obj, err} = echoObj; // destructuring object
-    this._format(msg, obj, err);
+    const {str, obj, err} = echoObj; // destructuring object
+    this._format(str, obj, err);
     this._log();
     return Promise.resolve(this.msgObj);
   }
 
 
   /**
-   * Method used in task functions as echo.msg('My message');
-   * Send message (string) to web panel via socket.io and/or to linux console.
-   * Use multiple parameters like in console.log --> echo.log('one', two')
-   * @param {String} messages - strings separated by comma, for example echo.log('one', 'two')
+   * Method used in task functions as echo.log('My message');
+   * Send comma separated strings to API via websocket and/or to linux console.
+   * Use multiple parameters like in console.log --> echo.log('one', 'two')
+   * @param {String} strings - strings separated by comma, for example echo.log('one', 'two')
    * @returns {Promise<any>} - can be used in async function as "await echo.log()"
    */
-  log(...messages) { // ... is "rest parameters" operator
-    // if message is object then convert it into string
-    messages = messages.map(message => {
-      if (typeof message === 'object') {
+  log(...strings) { // ... is "rest parameters" operator
+    // if strings is object then convert it into string
+    strings = strings.map(s => {
+      if (typeof s === 'object') {
         try {
-          message = JSON.stringify(message, null, 2);
+          s = JSON.stringify(s, null, 2);
         } catch (err) {
           console.log(err);
         }
       }
-      return message;
+      return s;
     });
 
-    const msg = messages.join(' '); // join with space  ::  echo.msg('a', 'b') ---> ['a', 'b'] ---> 'a b'
-    this._format(msg, null, null);
+    const str = strings.join(' '); // join with space  ::  echo.msg('a', 'b') ---> ['a', 'b'] ---> 'a b'
+    this._format(str, null, null);
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -102,8 +100,8 @@ class Echo {
 
   /**
    * Method used in task functions as echo.objekt({uri: 'deployment/changeaction/5e0246a283cf516d4b788f43', {action: 'stop'}});
-   * Send objekt to API router via socket.io.
-   * @param {Object} obj - objekt in format {uri, body}
+   * Send object to API via websocket and/or to linux console.
+   * @param {Object} obj - object
    * @returns {Promise<any>} - can be used in async function as "await echo.objekt()"
    */
   objekt(obj) {
@@ -115,7 +113,7 @@ class Echo {
 
   /**
    * Method used in task functions as echo.error(new Error('Some intentional error'));
-   * Send error to web panel via socket.io and/or to linux console.
+   * Send error to API via websocket and/or to linux console.
    * @param {Error} err - some error, for example new Error('Scraper error')
    * @returns {Promise<any>} - can be used in async function as "await echo.error()"
    */
@@ -131,13 +129,13 @@ class Echo {
   /******** PRIVATE METHODS  *******/
 
   /**
-   * Format object which is sent by socket.io or to linux console.
-   * @param {String} msg - echoed message
+   * Format object which is sent by websocket or to linux console.
+   * @param {String} str - echoed string
    * @param {Object} obj - echoed object {uri, body}
    * @param {Error} err - echoed error {message, stack}
    */
-  _format(msg, obj, err) {
-    if (!msg) { msg = ''; }
+  _format(str, obj, err) {
+    if (!str) { str = undefined; }
 
     if (!obj) { obj = undefined;}
 
@@ -152,10 +150,9 @@ class Echo {
     }
 
     const time = moment().toISOString();
-
     const room = this.room;
 
-    this.msgObj = Object.assign(this.msgObj, {msg, obj, err, time, room});
+    this.msgObj = Object.assign(this.msgObj, {str, obj, err, time, room}); // {user_id, robot_id, task_id, str, obj, err, time, room}
   }
 
 
@@ -193,8 +190,8 @@ class Echo {
     if (this.short) {
       /* SHORT PRINT */
       const time = moment(this.msgObj.time).format('DD.MMM.YYYY HH:mm:ss.SSS');
-      if (!!this.msgObj && !!this.msgObj.msg) {
-        console.log(chalk.greenBright(`(${time})`, this.msgObj.msg)); // print msg
+      if (!!this.msgObj && !!this.msgObj.str) {
+        console.log(chalk.greenBright(`(${time})`, this.msgObj.str)); // print str
       } else if (!!this.msgObj && !!this.msgObj.obj) {
         console.log(chalk.blueBright(`(${time})`, JSON.stringify(this.msgObj.obj))); // print stringified object
       } else if (!!this.msgObj && !!this.msgObj.err) { // print error
@@ -203,7 +200,7 @@ class Echo {
     } else {
       /* LONG PRINT */
       const msg = JSON.stringify(this.msgObj, null, 4);
-      if (!!this.msgObj && !!this.msgObj.msg) {
+      if (!!this.msgObj && !!this.msgObj.str) {
         console.log(chalk.greenBright(msg)); // print msg
       } else if (!!this.msgObj && !!this.msgObj.obj) {
         console.log(chalk.blueBright(msg)); // print object
