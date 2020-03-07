@@ -1,7 +1,5 @@
 const chalk = require('chalk');
-const BPromise = require('bluebird');
 const mongoose = require('mongoose');
-mongoose.Promise = BPromise;
 const StorageModel = require('./models/StorageModel');
 
 
@@ -112,8 +110,8 @@ class Mongo {
    * Create mongoose model.
    * @param {String} collection - mongodb collection name
    */
-  compileModel(collection) {
-    this.model = new StorageModel(this.conn, collection);
+  compileModel(collectionName) {
+    this.model = new StorageModel(this.conn, collectionName);
   }
 
 

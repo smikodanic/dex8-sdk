@@ -63,7 +63,6 @@ program
  */
 program
   .command('delete <taskName>')
-  .alias('del')
   .alias('rm')
   .description('Delete a task. Be careful with this command !!!')
   .action(del);

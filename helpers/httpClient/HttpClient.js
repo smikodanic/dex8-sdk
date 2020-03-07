@@ -11,7 +11,7 @@ const pkg_json = require('../../package.json');
 class HttpClient {
 
   /**
-   * @param {Object} opts - HTTP Client options {timeout, retry, maxRedirects, headers, encodeURI}
+   * @param {Object} opts - HTTP Client options {encodeURI, timeout, retry, retryDelay, maxRedirects, headers}
    */
   constructor(opts) {
     this.url;
@@ -337,7 +337,7 @@ class HttpClient {
    *  - retries are handled
    * @param {String} url - https://www.dex8.com/contact
    * @param {String} method - GET, POST, PUT, DELETE, PATCH
-   * @param {Objcet} body_obj - http body
+   * @param {Object} body_obj - http body
    */
   async ask(url, method = 'GET', body_obj) {
     try {
@@ -348,7 +348,7 @@ class HttpClient {
       let redirectCounter = 1;
 
 
-      /*** a) HANDLE 3XXX REDIRECTS */
+      /*** a) HANDLE 3XX REDIRECTS */
       while (!!answer && /^3\d{2}/.test(answer.status) && redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
 
         // repeat request with new url

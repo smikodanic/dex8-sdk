@@ -18,7 +18,7 @@ class FunctionFlow {
   constructor(opts = {}) {
     // general properties
     this.debug = opts.debug; // to use debugger or not
-    this.msDelay = opts.msDelay; // delay after each function
+    this.msDelay = opts.msDelay || 0; // delay after each function
 
     // function arguments - func(x, lib)
     this.x;
@@ -30,9 +30,9 @@ class FunctionFlow {
     this.goTo; // go to funcs index (a function within serial(funcs) method)
 
     // iteration properties
-    this.lastExecuted = {method: '', args: []}; // last executed FunctionFlow block method (serial, one, parallel, ...)
+    this.lastExecuted = {method: '', args: []}; // last executed FunctionFlow bundle method (serial, one, parallel, ...)
     this.iteration = 0; // current iteration in repeat method
-    this.iteration_max; // max number of iterations allowed - defined with n in repeat(n) method
+    this.iteration_max; // max number of iterations which can be reached by repeat() method - defined with n in repeat(n) method
     this.jumpTo; // jump to repeat() iteration
   }
 
@@ -59,7 +59,7 @@ class FunctionFlow {
     if (input) {
       this.x = input;
     } else {
-      throw new Error('Input is not defined.');
+      throw new Error('Input is injected in FunctionFlow but it is not defined.');
     }
   }
 
@@ -109,7 +109,7 @@ class FunctionFlow {
 
 
 
-  /*============================== FUNCTION   BLOCKS ==============================*/
+  /*============================== FUNCTION  BUNDLES ==============================*/
 
   /****************************** A) S E R I A L ******************************/
   /**
@@ -231,7 +231,7 @@ class FunctionFlow {
   /*============================== ITERATION  METHODS ==============================*/
 
   /**
-   * Repeat last executed FunctionFlow block method n times.
+   * Repeat last executed FunctionFlow bundle method n times.
    * input -->|----------serial------------->|----> output
    *          |                             n|
    *          |<---------repeat n------------|
@@ -316,7 +316,7 @@ class FunctionFlow {
 
 
   /**
-   * Go to function defined in serial(funcs) method.
+   * Go to function used in serial(funcs) method.
    * When that function is executed continue with next function in funcs array.
    * @param {Number} goTo - funcs array index in serial(funcs) -- 0 >= goTo > funcs.length
    */
@@ -369,14 +369,14 @@ class FunctionFlow {
   /*============================== HELPERS ==============================*/
   /**
    * Make delay.
-   * @param {Number} msDelay - delay in miliseconds. If msDelay=-1 then infinite delay.
+   * @param {Number} ms - delay in miliseconds. If ms=-1 then infinite delay.
    */
-  delay(msDelay) {
+  delay(ms) {
     this.delayRemove(); // initially remove previous delays
-    if (this.debug) { this._debugger3(this.delay.name, msDelay); }
+    if (this.debug) { this._debugger3(this.delay.name, ms); }
 
     const promis = new Promise(resolve => {
-      this.delayID = setTimeout(resolve, msDelay); // keep promis in 'pending' state until setTimeout is not finished
+      this.delayID = setTimeout(resolve, ms); // keep promis in 'pending' state until setTimeout is not finished
     });
 
     return promis;
@@ -385,14 +385,14 @@ class FunctionFlow {
 
   /**
    * Randomize delay between min and max miliseconds.
-   * @param {Number} msDelayMin - min miliseconds: 3000
-   * @param {Number} msDelayMax - max miliseconds: 5000
+   * @param {Number} msMin - min miliseconds: 3000
+   * @param {Number} msMax - max miliseconds: 5000
    */
-  delayRnd(msDelayMin = 0, msDelayMax = 10) {
-    const diff = msDelayMax - msDelayMin;
-    let msDelay = msDelayMin + diff * Math.random(); // Math.random() gives number between 0 and 1
-    msDelay = Math.round(msDelay);
-    return this.delay(msDelay);
+  delayRnd(msMin = 0, msMax = 1000) {
+    const diff = msMax - msMin;
+    let ms = msMin + diff * Math.random(); // Math.random() gives number between 0 and 1
+    ms = Math.round(ms);
+    return this.delay(ms);
   }
 
 
