@@ -40,7 +40,7 @@ const uploadOneTask = async (taskName) => {
     if (tf3) {
       confPath = path.join(taskFolder, 'conf.js');
     } else {
-      const tf4 = await fse.pathExists(path.join(taskFolder, '../', 'conf.js')); // watch in up directory
+      const tf4 = await fse.pathExists(path.join(taskFolder, '../', 'conf.js')); // watch in upper directory
       if (tf4) {
         confPath = path.join(taskFolder, '../', 'conf.js');
       } else { throw new Error(`File "conf.js" is not created. Please login.`); }
@@ -52,20 +52,20 @@ const uploadOneTask = async (taskName) => {
     // console.log('conf:: ', conf);
 
     /*** 1) get files for upload ***/
-    const upfiles = await fse.readdir(taskFolder);
-    // console.log('upfiles:: ', upfiles);
-    /*
-upfiles::  [
-  '.editorconfig',
-  '.eslintrc',
-  '.gitignore',
-  'conf.js',
-  'howto.html',
-  'input111.js',
-  'input222.js',
-  'main.js',
-  'manifest.json' ]
-    */
+    let upfiles = await fse.readdir(taskFolder);
+
+    // remove files which are not needed for upload process
+    upfiles = upfiles.filter(uf => (
+      uf !== '.editorconfig' &&
+      uf !== '.eslintrc' &&
+      uf !== '.gitignore' &&
+      uf !== 'conf.js' &&
+      uf !== 'node_modules' &&
+      uf !== 'package-lock.json' &&
+      uf !== 'package.json'
+    ));
+    console.log('upfiles:: ', upfiles); // upfiles:: [ 'f1.js', 'howto.html', 'input.js', 'main.js', 'manifest.json' ]
+
 
     /*** 2) read manifest ***/
     const manifestPath = path.join(taskFolder, 'manifest.json');

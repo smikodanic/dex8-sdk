@@ -97,7 +97,7 @@ program
 
 /**
  * Download DEX8 task
- * $dex8 download <task_id> - downlaod task to current working directory
+ * $dex8 download <task_id> - download task to current working directory
  * "task_id" is mongoDB ObjectId , for example: 5e20355c72cdfa2127619493
  */
 program

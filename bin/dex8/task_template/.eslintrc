@@ -2,7 +2,9 @@
 	"globals": {
 		"jQuery": false,
     "$": false,
-		"angular": false
+		"angular": false,
+    "window": true,
+    "document": true
 	},
 	"env": {
 		"browser": false,

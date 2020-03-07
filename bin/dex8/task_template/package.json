@@ -1,0 +1,32 @@
+{
+  "name": "dex8-task",
+  "version": "1.0.0",
+  "title": "DEX8 Task",
+  "description": "DEX8 Task",
+  "author": "",
+  "license": "MIT",
+  "main": "./main.js",
+  "keywords": [
+    "dex8 task",
+    "scraper",
+    "robot",
+    "data mining",
+    "data extraction"
+  ],
+  "scripts": {
+    "inst": "rm -rf node_modules && export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false && npm install",
+    "inst-chromium": "rm -rf node_modules && npm install"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.5",
+    "chalk": "^2.4.1",
+    "cheerio": "^1.0.0-rc.2",
+    "dex8-sdk": "^2.0.5",
+    "fs-extra": "^8.1.0",
+    "lodash": "^4.17.15",
+    "moment": "^2.22.2",
+    "mongoose": "^5.8.7",
+    "puppeteer": "^1.11.0",
+    "rxjs": "^6.5.3"
+  }
+}
