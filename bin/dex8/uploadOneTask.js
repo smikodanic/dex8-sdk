@@ -64,7 +64,7 @@ const uploadOneTask = async (taskName) => {
       uf !== 'package-lock.json' &&
       uf !== 'package.json'
     ));
-    console.log('upfiles:: ', upfiles); // upfiles:: [ 'f1.js', 'howto.html', 'input.js', 'main.js', 'manifest.json' ]
+    // console.log('upfiles:: ', upfiles); // upfiles:: [ 'f1.js', 'howto.html', 'input.js', 'main.js', 'manifest.json' ]
 
 
     /*** 2) read manifest ***/
