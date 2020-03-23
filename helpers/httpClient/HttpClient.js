@@ -171,7 +171,7 @@ class HttpClient {
 
     err.original = error;
 
-    throw err; // formatted error is returned
+    return err; // formatted error is returned
   }
 
 
@@ -423,7 +423,7 @@ class HttpClient {
       return answer;
 
     } catch (err) {
-      throw (err);
+      throw err;
     }
   }
 
