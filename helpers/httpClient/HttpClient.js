@@ -158,6 +158,9 @@ class HttpClient {
     } else if (error.code === 'ECONNREFUSED') {
       err.status = 400;
       err.message = `400 Bad Request [ECONNREFUSED] ${url}`;
+    } else if (error.code === 'ECONNRESET') {
+      err.status = 500;
+      err.message = `500 No Server Response [ECONNRESET] ${url}`; // replacing: Error: socket hang up
     } else if (error.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
       err.status = 400;
       err.message = `400 Bad Request [ERR_TLS_CERT_ALTNAME_INVALID] ${error.reason}`;
