@@ -65,6 +65,18 @@ class HttpClient {
     this.hostname = urlObj.hostname;
     this.port = urlObj.port;
     this.pathname = urlObj.pathname;
+    this.queryString = urlObj.search;
+
+    // debug
+    /*
+    console.log('this.url:: ', this.url); // http://localhost:8001/www/products?category=databases
+    console.log('this.protocol:: ', this.protocol); // http:
+    console.log('this.hostname:: ', this.hostname); // localhost
+    console.log('this.port:: ', this.port); // 8001
+    console.log('this.pathname:: ', this.pathname); // /www/products
+    console.log('this.queryString:: ', this.queryString); // ?category=databases
+    */
+
     return url;
   }
 
@@ -203,7 +215,7 @@ class HttpClient {
         agent,
         hostname: this.hostname,
         port: this.port,
-        path: this.pathname,
+        path: this.pathname + this.queryString,
         method,
         headers: this.headers
       };
