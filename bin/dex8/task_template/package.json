@@ -18,14 +18,14 @@
     "inst-chromium": "rm -rf node_modules && npm install"
   },
   "dependencies": {
-    "bluebird": "^3.5.5",
-    "chalk": "^2.4.1",
-    "cheerio": "^1.0.0-rc.2",
-    "fs-extra": "^8.1.0",
+    "bluebird": "^3.7.2",
+    "chalk": "^4.0.0",
+    "cheerio": "^1.0.0-rc.3",
+    "fs-extra": "^9.0.0",
     "lodash": "^4.17.15",
-    "moment": "^2.22.2",
-    "mongoose": "^5.8.7",
-    "puppeteer": "^2.1.1",
-    "rxjs": "^6.5.3"
+    "moment": "^2.24.0",
+    "mongoose": "^5.9.9",
+    "puppeteer": "^3.0.0",
+    "rxjs": "^6.5.5"
   }
 }
