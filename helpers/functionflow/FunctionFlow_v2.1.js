@@ -245,21 +245,20 @@ class FunctionFlow {
 
     let i = 1;
     while (i <= n) {
-      // redefine i with this.jumpTo
-      if (!!this.jumpTo && this.jumpTo >=0) {
-        i = this.jumpTo; // redefine i
-        this.jumpTo = undefined; // reset jumpTo
-      }
-
       this.iteration = i;
       if (this.debug) { this._debugger2(this.iteration, this.repeat.name, method); }
 
       this.x = await this[method](...args);
 
-      if (this.status === 'pause')  { await this._delayPause(this.msPause); }
-      if (this.status === 'stop')  { break; }
+      if (this.status === 'pause')  { await this._delayPause(this.msPause); } // pause repeat
+      if (this.status === 'stop')  { break; } // stop all repeats and exit
 
-      i++;
+      if (!!this.jumpTo) { // stop only current repeat - redefine i with this.jumpTo
+        i = this.jumpTo;
+        this.jumpTo = undefined; // reset "jumpTo" for the next "repeat()" usage
+      } else { // increase i if jumpTo is not defined
+        i++;
+      }
     }
 
     return this.x;
