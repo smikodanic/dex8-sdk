@@ -12,6 +12,7 @@ const init = require('./init.js');
 const del = require('./del.js');
 const start = require('./start.js');
 const upload = require('./upload.js');
+const update = require('./update.js');
 const download = require('./download.js');
 
 
@@ -93,6 +94,18 @@ program
   .option('-t, --task <taskName>', 'Upload a task defined by name.')
   .option('-a, --all', 'Upload all DEX8 tasks.')
   .action(upload);
+
+
+/**
+ * Update task details
+ * This command will update task details written in manifest.json and howto.html.
+ * Altgough same can be done with "$dex8 upload" this is much faster because it will not change files.
+ * $dex8 update
+ */
+program
+  .command('update')
+  .description('Update task details e.g. manifest.json and howto.html.')
+  .action(update);
 
 
 /**
