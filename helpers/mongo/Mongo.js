@@ -187,6 +187,10 @@ class Mongo {
    * @param {Object} docNew - new, updated document
    */
   editOne(moQuery, docNew, updOpts) {
+    docNew.user_id = this.user_id;
+    docNew.robot_id = this.robot_id;
+    docNew.task_id = this.task_id;
+
     if (!updOpts) {
       updOpts = {
         new: true, // return updated document as 'result'
