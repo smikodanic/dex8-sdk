@@ -7,21 +7,24 @@ const mongo = new Mongo(user_id, robot_id, task_id);
 
 
 // establish connection
-const mo_uri = 'mongodb://5.189.161.70:27017/dex8-dev-pool-free01';
-const mo_usr = 'dex8_freeuser';
-const mo_pass = 'freedom5';
-mongo.connect(mo_uri, mo_usr, mo_pass);
+const mo_uri = 'mongodb://dex8_freeuser:freedom5@5.189.161.70:27017/dex8-dev-pool-free01';
+mongo.connect(mo_uri);
 
 
 // compile 'mongo-testMD'
 mongo.compileModel('mongo-test');
+mongo.useModel('mongo-test');
 
 
-const doc = {
+let doc = {
   url: 'http://saved.com',
   text: 'Saved Lorem ipsum',
   depth: 2
 };
+
+
+// append user_id, robot_id and task_id
+doc = {...doc, ...mongo.ids};
 
 mongo.save(doc)
   .then(docNew => {

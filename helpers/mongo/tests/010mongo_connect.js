@@ -8,13 +8,13 @@ const mongo = new Mongo(user_id, robot_id, task_id);
 
 
 // test connection
-const mo_uri = 'mongodb://dex8_freeuser:freedom5@5.189.161.70:27017/dex8-dev-pool-free01';
+const mo_uri = 'mongodb://dex8_freeuser:freedom56@5.189.161.70:27017/dex8-dev-pool-free01';
 // const mo_uri = 'mongodb+srv://dex8_freeuser:12345@cluster0-n4qix.mongodb.net/dex8-dev-pool-free01?retryWrites=true&w=majority'; // test cloud.mongodb.com
 mongo.connect(mo_uri);
 
 
 // test disconnection
-setTimeout(() => {
+setTimeout(async () => {
   console.log('==== disconnect ====');
-  mongo.disconnect();
+  await mongo.disconnect();
 }, 2100);

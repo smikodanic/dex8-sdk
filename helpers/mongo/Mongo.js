@@ -1,7 +1,6 @@
 const chalk = require('chalk');
 const mongoose = require('mongoose');
-const StorageModel = require('./models/StorageModel');
-
+const genericSchema = require('./schema/Generic');
 
 
 class Mongo {
@@ -18,13 +17,17 @@ class Mongo {
     this.robot_id = robot_id;
     this.task_id = task_id;
 
+    this.ids = {user_id, robot_id, task_id};
+
     this.mo_uri;
     this.conn; // NativeConnection
-    this.model = null;
+    this.model = null; // currently used model
+    this.compiledModels = []; // array of all compiled models
   }
 
 
 
+  /***************** SERVER  *****************/
   onEvent() {
     this.conn.on('error', (err) => {
       console.error(chalk.red(this.mo_uri, err, 'readyState:' + this.conn.readyState));
@@ -72,7 +75,6 @@ class Mongo {
   }
 
 
-
   /**
    * Disconnect from mongodb server.
    */
@@ -81,10 +83,24 @@ class Mongo {
   }
 
 
+
+
+
+  /***************** DATABASE  *****************/
+  /**
+   * Delete database
+   */
+  deleteDatabase() {
+    return this.conn.db.dropDatabase();
+  }
+
+
+
+  /***************** COLLECTIONS  *****************/
   /**
    * List database collections
    */
-  listDBCollections() {
+  showCollections() {
     return this.conn.db.listCollections().toArray();
   }
 
@@ -98,20 +114,50 @@ class Mongo {
   }
 
 
+
+
+  /***************** DOCUMENTS  *****************/
   /**
-   * Delete database
+   * Create mongoose model.
+   * @param {Object | String} moSchema - mongoose.Schema or collectionName
    */
-  deleteDatabase() {
-    return this.conn.db.dropDatabase();
+  async compileModel(moSchema) {
+
+    //// define collectionName and sch
+    let collectionName, sch;
+
+    if (!moSchema) {
+      // use genericSchema shema if other schema is not defined
+      collectionName = genericSchema.options.collection;
+      sch = genericSchema;
+    }
+    else if (typeof moSchema === 'string') { // when collectionName is used instead of mongoose Schema (to be compatible with old method)
+      collectionName = moSchema;
+      genericSchema.options.collection = collectionName;
+      sch = genericSchema;
+    } else {
+      collectionName = moSchema.options.collection;
+      sch = moSchema;
+    }
+
+    //// compile model and push to compiledModels
+    this.model = this.conn.model(`${collectionName}MD`, sch); // if mongoose.createConnection() is used
+    this.compiledModels.push(this.model);
+    await new Promise(resolve => setTimeout(resolve, 100)); // small delay
   }
 
 
   /**
-   * Create mongoose model.
-   * @param {String} collection - mongodb collection name
+   * Use mongoose model according to the selected collection name.
+   * Define current model for methods: add, save, list, getOne, deleteOne, deleteMany, ...
+   * @param {String} collectionName - mongodb collection name
    */
-  compileModel(collectionName) {
-    this.model = new StorageModel(this.conn, collectionName);
+  useModel(collectionName) {
+    this.model = this.compiledModels.find(compiledModel => {
+      const tf = compiledModel.collection.collectionName === collectionName;
+      // console.log(compiledModel.collection.collectionName, collectionName, ' =>', tf);
+      return tf;
+    });
   }
 
 
@@ -120,10 +166,7 @@ class Mongo {
    * @param {Object} doc - mongoose document (object) to be saved
    */
   add(doc) {
-    doc.user_id = this.user_id;
-    doc.robot_id = this.robot_id;
-    doc.task_id = this.task_id;
-    return this.model.addDoc(doc);
+    return this.model.create(doc);
   }
 
 
@@ -132,10 +175,8 @@ class Mongo {
    * @param {Object} doc - mongoose doc (object) to be saved
    */
   save(doc) {
-    doc.user_id = this.user_id;
-    doc.robot_id = this.robot_id;
-    doc.task_id = this.task_id;
-    return this.model.saveDoc(doc);
+    const docObj = new this.model(doc);
+    return docObj.save();
   }
 
 
@@ -148,7 +189,25 @@ class Mongo {
    * @param {String} select
    */
   list(moQuery, limit, skip, sort, select) {
-    return this.model.listDocs(moQuery, limit, skip, sort, select);
+    return this.model
+      .countDocuments(moQuery)
+      .then(resultsNum => {
+        return this.model
+          .find(moQuery)
+          .limit(limit)
+          .skip(skip)
+          .sort(sort)
+          .select(select)
+          .exec()
+          .then(resultsArr => {
+            const results = {
+              success: true,
+              count: resultsNum,
+              data: resultsArr
+            };
+            return results;
+          });
+      });
   }
 
 
@@ -159,7 +218,11 @@ class Mongo {
    * @param {String} select
    */
   getOne(moQuery, sort, select) {
-    return this.model.getOneDoc(moQuery, sort, select);
+    return this.model
+      .findOne(moQuery)
+      .sort(sort)
+      .select(select)
+      .exec();
   }
 
 
@@ -168,7 +231,7 @@ class Mongo {
    * @param {Object} moQuery - mongo query
    */
   deleteOne(moQuery) {
-    return this.model.deleteOneDoc(moQuery);
+    return this.model.findOneAndDelete(moQuery);
   }
 
 
@@ -176,8 +239,8 @@ class Mongo {
    * Delete docs.
    * @param {Object} moQuery - mongo query
    */
-  deleteMany(moQuery) {
-    return this.model.deleteManyDocs(moQuery);
+  deleteMulti(moQuery) {
+    return this.model.deleteMany(moQuery);
   }
 
 
@@ -187,10 +250,6 @@ class Mongo {
    * @param {Object} docNew - new, updated document
    */
   editOne(moQuery, docNew, updOpts) {
-    docNew.user_id = this.user_id;
-    docNew.robot_id = this.robot_id;
-    docNew.task_id = this.task_id;
-
     if (!updOpts) {
       updOpts = {
         new: true, // return updated document as 'result'
@@ -200,8 +259,9 @@ class Mongo {
       // sort: {created_at: -1} // if multiple results are found, sets the sort order to choose which doc to update
       };
     }
-    return this.model.editOneDoc(moQuery, docNew, updOpts);
+    return this.model.findOneAndUpdate(moQuery, docNew, updOpts);
   }
+
 
 
 

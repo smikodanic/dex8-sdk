@@ -14,13 +14,17 @@ mongo.connect(mo_uri);
 
 // compile 'mongo-testMD'
 mongo.compileModel('mongo-test');
+mongo.useModel('mongo-test');
 
 
-const doc = {
+let doc = {
   url: 'http://added.com',
   text: 'Lorem ipsum',
   depth: 55
 };
+
+// append user_id, robot_id and task_id
+doc = {...doc, ...mongo.ids};
 
 mongo.add(doc)
   .then(docNew => {
