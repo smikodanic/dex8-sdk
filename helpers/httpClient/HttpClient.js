@@ -221,7 +221,49 @@ class HttpClient {
    * @param {Object} body_obj - http body payload
    */
   askOnce(url, method = 'GET', body_obj) {
-    url = this._parseUrl(url);
+    // answer (response object)
+    const answer = {
+      requestURL: url,
+      requestMethod: method,
+      status: 0,
+      statusMessage: '',
+      httpVersion: undefined,
+      gzip: false,
+      https: /^https/.test(this.protocol),
+      // remoteAddress: // TODO
+      // referrerPolicy: // TODO
+      req: {
+        headers: this.headers,
+        payload: undefined
+      },
+      res: {
+        headers: undefined,
+        content: undefined
+      },
+      time: {
+        req: this._getTime(),
+        res: undefined,
+        duration: undefined
+      }
+    };
+
+
+    // check and correct URL
+    try {
+      url = this._parseUrl(url);
+      answer.url = url;
+    } catch (err) {
+      // if URL is not properly defined
+      const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
+      ans.status = 400; // client error - Bad Request
+      ans.statusMessage = err.message || 'Bad Request';
+      ans.time.res = this._getTime();
+      ans.time.duration = this._getTimeDiff(ans.time.req, ans.time.res);
+
+      return ans; // send answer and stop further execution
+    }
+
+
     const agent = this._hireAgent(this.opts);
     const requestLib = this._selectRequest();
 
@@ -241,47 +283,12 @@ class HttpClient {
 
 
     /*** 2) add body to HTTP request ***/
-    let body_str, payload;
     if (!!body_obj && !/GET/i.test(method)) {
-      payload = body_obj;
-      body_str = JSON.stringify(body_obj);
+      answer.payload = body_obj;
+      const body_str = JSON.stringify(body_obj);
       this.headers['content-length'] = body_str.length;
       clientRequest.write(body_str);
     }
-
-
-
-    // time measurement
-    const time = {
-      req: this._getTime(),
-      res: undefined,
-      duration: undefined
-    };
-
-
-    // answer (response object)
-    const answer = {
-      requestURL: url,
-      requestMethod: method,
-      status: 0,
-      statusMessage: '',
-      httpVersion: undefined,
-      gzip: false,
-      https: /^https/.test(this.protocol),
-      // remoteAddress: // TODO
-      // referrerPolicy: // TODO
-      req: {
-        headers: this.headers,
-        payload
-      },
-      res: {
-        headers: undefined,
-        content: undefined
-      },
-      time
-    };
-
-
 
 
     const promise = new Promise ((resolve, reject) => {
@@ -414,7 +421,7 @@ class HttpClient {
 
     while (!!answer && /^3\d{2}/.test(answer.status) && redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
 
-      const url_new = answer.res.headers.location; // redirected URL is in 'location' header
+      const url_new = url_node.resolve(url, answer.res.headers.location); // redirected URL is in 'location' header
       console.log(`#${redirectCounter} redirection ${answer.status} from ${this.url} to ${url_new}`);
 
       answer = await this.askOnce(url_new, method, body_obj); // repeat request with new url
