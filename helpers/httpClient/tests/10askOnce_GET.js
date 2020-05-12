@@ -9,7 +9,7 @@ const url = process.argv[2];
 console.log('asked url:: GET', url);
 
 
-const getUrl = async() => {
+const getUrl = async () => {
   try {
     const dhc = new HttpClient(); // dex8 http client instance
     const answer = await dhc.askOnce(url);

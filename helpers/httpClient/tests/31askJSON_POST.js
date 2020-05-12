@@ -6,7 +6,7 @@ const chalk = require('chalk');
 const HttpClient = require('../HttpClient');
 const url = process.argv[2];
 const body_str = process.argv[3]; // this is String
-console.log('asked url:: GET', url);
+console.log('asked url:: POST', url);
 
 
 const getJSON = async() => {

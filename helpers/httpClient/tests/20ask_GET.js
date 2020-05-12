@@ -1,6 +1,13 @@
 /**
  * $ node 20ask_GET.js <url>
+ *
+ * // redirection test
+ * $ node 20ask_GET.js ebay.com
+ *
+ * // timeout test
+ * set opts.timeout = 10;
  */
+
 const util = require('util');
 const HttpClient = require('../HttpClient');
 const url = process.argv[2];
@@ -12,9 +19,9 @@ const getUrl = async() => {
 
   const opts = {
     encodeURI: false,
-    timeout: 8000,
-    retry: 3,
-    retryDelay: 5500,
+    timeout: 3000,
+    retry: 2,
+    retryDelay: 2100,
     maxRedirects: 3,
     headers: {
       'authorization': '',
@@ -31,10 +38,10 @@ const getUrl = async() => {
 
   try {
     const dhc = new HttpClient(opts); // dex8 http client instance
-    const answer = await dhc.ask(url);
+    const answers = await dhc.ask(url);
 
-    console.log('answer:');
-    console.log(util.inspect(answer, false, 3, true));
+    console.log('answers:: ');
+    console.log(util.inspect(answers, false, 3, true));
 
   } catch (err) {
     throw err;

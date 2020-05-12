@@ -3,7 +3,7 @@
  */
 const http = require('http');
 const https = require('https');
-const url_node = require('url');
+const URL = require('url').URL;
 const zlib = require('zlib');
 const pkg_json = require('../../package.json');
 
@@ -19,7 +19,6 @@ class HttpClient {
     this.hostname = '';
     this.port = 80;
     this.pathname = '/';
-    this.queryString = '';
 
     if (!opts) {
       this.opts = {
@@ -43,9 +42,11 @@ class HttpClient {
       this.opts = opts;
     }
 
-    // default request headers
+    // default headers
     this.headers = this.opts.headers;
 
+    // count retries
+    this.retryCounter = 0;
   }
 
 
@@ -58,7 +59,7 @@ class HttpClient {
    */
   _parseUrl(url) {
     url = this._correctUrl(url);
-    const urlObj  = new url_node.URL(url);
+    const urlObj  = new URL(url);
     this.url = url;
     this.protocol = urlObj.protocol;
     this.hostname = urlObj.hostname;
@@ -81,7 +82,7 @@ class HttpClient {
 
 
   /**
-   * URL corrections
+   * Make some URL corrections
    */
   _correctUrl(url) {
     if (!url) {throw new Error('URL is not defined'); }
@@ -94,7 +95,7 @@ class HttpClient {
       url = 'http://' + url;
     }
 
-    // 3. remove multiple empty spaces and insert %20
+    // 3. remove empty spaces
     if (this.opts.encodeURI) {
       url = encodeURI(url);
     } else {
@@ -189,25 +190,6 @@ class HttpClient {
   }
 
 
-  /**
-   * Get current date/time
-   */
-  _getTime() {
-    const d = new Date();
-    return d.toISOString();
-  }
-
-
-  /**
-   * Get time difference in seconds
-   */
-  _getTimeDiff(start, end) {
-    const ds = new Date(start);
-    const de = new Date(end);
-    return (de.getTime() - ds.getTime()) / 1000;
-  }
-
-
 
 
   /********** REQUESTS *********/
@@ -225,173 +207,142 @@ class HttpClient {
     const agent = this._hireAgent(this.opts);
     const requestLib = this._selectRequest();
 
+    try {
+
+      /*** 1) init HTTP request ***/
+      // http.request() options https://nodejs.org/api/http.html#http_http_request_url_options_callback
+      const requestOpts = {
+        agent,
+        hostname: this.hostname,
+        port: this.port,
+        path: this.pathname + this.queryString,
+        method,
+        headers: this.headers
+      };
+      const clientRequest = requestLib(requestOpts);
 
 
-    /*** 1) init HTTP request ***/
-    // http.request() options https://nodejs.org/api/http.html#http_http_request_url_options_callback
-    const requestOpts = {
-      agent,
-      hostname: this.hostname,
-      port: this.port,
-      path: this.pathname + this.queryString,
-      method,
-      headers: this.headers
-    };
-    const clientRequest = requestLib(requestOpts);
+      /*** 2) add body to HTTP request ***/
+      let body_str, payload;
+      if (!!body_obj && !/GET/i.test(method)) {
+        payload = body_obj;
+        body_str = JSON.stringify(body_obj);
+        this.headers['content-length'] = body_str.length;
+        clientRequest.write(body_str);
+      }
+
+      clientRequest.setTimeout(this.opts.timeout);
+      clientRequest.on('timeout', res => {
+        clientRequest.abort();
+        throw new Error(`Request aborted due to timeout (${this.opts.timeout} ms).`);
+      });
 
 
-    /*** 2) add body to HTTP request ***/
-    let body_str, payload;
-    if (!!body_obj && !/GET/i.test(method)) {
-      payload = body_obj;
-      body_str = JSON.stringify(body_obj);
-      this.headers['content-length'] = body_str.length;
-      clientRequest.write(body_str);
+
+
+      const promise = new Promise ((resolve, reject) => {
+
+        /*** 3) response ***/
+        clientRequest.on('response', res => {
+
+          // collect raw data e.g. buffer data
+          const buf_chunks = [];
+          res.on('data', (buf_chunk) => {
+            buf_chunks.push(buf_chunk);
+          });
+
+
+          res.on('end', () => {
+            // concat buffer parts
+            const buf = Buffer.concat(buf_chunks);
+
+            // decompress
+            let gzip = false;
+            let gunziped = buf;
+            if (!!res.headers['content-encoding'] && res.headers['content-encoding'] === 'gzip') {
+              gunziped = zlib.gunzipSync(buf);
+              gzip = true;
+            }
+
+            // convert binary (buffer) to string
+            let content = gunziped.toString();
+
+            // convert string to object if content is in JSON format
+            let contentObj;
+            try {
+              contentObj = JSON.parse(content);
+              if (!!contentObj) {
+                content = contentObj;
+              }
+            } catch(err) {}
+
+
+
+            // format answer
+            const answer = {
+              requestURL: url,
+              requestMethod: method,
+              status: res.statusCode,
+              // remoteAddress: // TODO
+              // referrerPolicy: // TODO
+              statusMessage: res.statusMessage,
+              httpVersion: res.httpVersion,
+              gzip,
+              https: /^https/.test(this.protocol),
+              req: {
+                headers: this.headers,
+                payload
+              },
+              res: {
+                headers: res.headers,
+                content
+              }
+            };
+
+
+            if (!!answer && /^4\d{2}/.test(answer.status)) {
+              const errmsg = answer.res.content.message || 'Status code 4xx (client error)';
+              const error = new Error(errmsg);
+              error.status = answer.status;
+              const err = this._formatError(error, url);
+              reject(err);
+            } else if (!!answer && /^5\d{2}/.test(answer.status)) {
+              const errmsg = answer.res.content.message || 'Status code 4xx (server error)';
+              const error = new Error(errmsg);
+              error.status = answer.status;
+              const err = this._formatError(error, url);
+              reject(err);
+            } else {
+              resolve(answer); // good answer will have 2xx status
+            }
+
+
+            this._killAgent(agent);
+
+          });
+
+        });
+
+
+        /*** 4) handle error ***/
+        clientRequest.on('error', error => {
+          this._killAgent(agent);
+          const err = this._formatError(error, url);
+          reject(err);
+        });
+
+      });
+
+      /*** 5) finish with sending request */
+      clientRequest.end();
+
+      return promise;
+
+    } catch (err) {
+      throw err;
     }
 
-
-
-    // time measurement
-    const time = {
-      req: this._getTime(),
-      res: undefined,
-      duration: undefined
-    };
-
-
-    // answer (response object)
-    const answer = {
-      requestURL: url,
-      requestMethod: method,
-      status: 0,
-      statusMessage: '',
-      httpVersion: undefined,
-      gzip: false,
-      https: /^https/.test(this.protocol),
-      // remoteAddress: // TODO
-      // referrerPolicy: // TODO
-      req: {
-        headers: this.headers,
-        payload
-      },
-      res: {
-        headers: undefined,
-        content: undefined
-      },
-      time
-    };
-
-
-
-
-    const promise = new Promise ((resolve, reject) => {
-
-      /*** 3.A) successful response ***/
-      clientRequest.on('response', res => {
-
-        // collect raw data e.g. buffer data
-        const buf_chunks = [];
-        res.on('data', (buf_chunk) => {
-          buf_chunks.push(buf_chunk);
-        });
-
-
-        res.on('end', () => {
-          // concat buffer parts
-          const buf = Buffer.concat(buf_chunks);
-
-          // decompress
-          let gzip = false;
-          let gunziped = buf;
-          if (!!res.headers['content-encoding'] && res.headers['content-encoding'] === 'gzip') {
-            try {
-              gunziped = zlib.gunzipSync(buf);
-            } catch (err) {
-
-            }
-            gzip = true;
-          }
-
-          // convert binary (buffer) to string
-          let content = gunziped.toString();
-
-          // convert string to object if content is in JSON format
-          let contentObj;
-          try {
-            contentObj = JSON.parse(content);
-            if (!!contentObj) {
-              content = contentObj;
-            }
-          } catch(err) {}
-
-
-
-          // format answer
-          const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
-          ans.status = res.statusCode; // 2xx -ok response, 4xx -client error (bad request), 5xx -server error
-          ans.statusMessage = res.statusMessage;
-          ans.httpVersion = res.httpVersion;
-          ans.gzip = gzip;
-          ans.res.headers = res.headers;
-          ans.res.content = content;
-          ans.time.res = this._getTime();
-          ans.time.duration = this._getTimeDiff(ans.time.req, ans.time.res);
-
-
-          resolve(ans);
-
-          this._killAgent(agent);
-
-        });
-
-      });
-
-
-      /*** 3.B) on timeout (no response from the server) ***/
-      clientRequest.setTimeout(this.opts.timeout);
-      clientRequest.on('timeout', () => {
-        this._killAgent(agent);
-
-        // format answer
-        const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
-        ans.status = 408; // 408 - timeout
-        ans.statusMessage = `Request aborted due to timeout (${this.opts.timeout} ms) ${url} `;
-        ans.time.res = this._getTime();
-        ans.time.duration = this._getTimeDiff(ans.time.req, ans.time.res);
-
-        resolve(ans);
-      });
-
-
-      /*** 3.C) on error (only if promise is not resolve by timeout - prevent resolving twice)***/
-      clientRequest.on('error', error => {
-        this._killAgent(agent);
-        const err = this._formatError(error, url);
-
-        // format answer
-        const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
-        ans.status = err.status;
-        ans.statusMessage = err.message;
-        ans.time.res = this._getTime();
-        ans.time.duration = this._getTimeDiff(ans.time.req, ans.time.res);
-
-        // do not resolve if it's already resolved by timeout
-        resolve(ans);
-      });
-
-
-
-    });
-
-    /*** 4) finish with sending request */
-    clientRequest.end();
-
-
-
-    return promise;
-
-
-  } // \askOnce
+  } // \request
 
 
 
@@ -404,44 +355,45 @@ class HttpClient {
    * @param {Object} body_obj - http body
    */
   async ask(url, method = 'GET', body_obj) {
+    try {
 
-    let answer = await this.askOnce(url, method, body_obj);
-    const answers = [answer];
+      let answer = await this.askOnce(url, method, body_obj);
+      const answers = [answer];
+
+      let redirectCounter = 1;
 
 
-    /*** a) HANDLE 3XX REDIRECTS */
-    let redirectCounter = 1;
+      /*** a) HANDLE 3XX REDIRECTS */
+      while (!!answer && /^3\d{2}/.test(answer.status) && redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
 
-    while (!!answer && /^3\d{2}/.test(answer.status) && redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
+        // repeat request with new url
+        const url_new = answer.res.headers.location;
+        console.log(`#${redirectCounter} redirection ${answer.status} from ${this.url} to ${url_new}`);
+        answer = await this.askOnce(url_new, method, body_obj);
 
-      const url_new = answer.res.headers.location; // redirected URL is in 'location' header
-      console.log(`#${redirectCounter} redirection ${answer.status} from ${this.url} to ${url_new}`);
+        answers.push(answer);
 
-      answer = await this.askOnce(url_new, method, body_obj); // repeat request with new url
-      answers.push(answer);
+        redirectCounter++;
+      }
 
-      redirectCounter++;
+      return answers;
+
+
+    } catch (err) {
+
+      /*** b) HANDLE RETRIES */
+      this.retryCounter++;
+
+      if (this.retryCounter <= this.opts.retry) {
+        console.log(`#${this.retryCounter} retry on ${this.url}`);
+        await new Promise(resolve => setTimeout(resolve, this.opts.retryDelay)); // delay before retrial
+        await this.ask(url, method = 'GET', body_obj);
+      } else {
+        throw err;
+      }
+
     }
 
-
-
-    /*** b) HANDLE RETRIES when status = 408 timeout */
-    let retryCounter = 1;
-
-    while (answer.status === 408 && retryCounter <= this.opts.retry) {
-      console.log(`#${retryCounter} retry due to timeout (${this.opts.timeout}) on ${url}`);
-      await new Promise(resolve => setTimeout(resolve, this.opts.retryDelay)); // delay before retrial
-
-      answer = await this.askOnce(url, method, body_obj);
-      answers.push(answer);
-
-
-      retryCounter++;
-    }
-
-
-
-    return answers;
 
   }
 
@@ -465,25 +417,29 @@ class HttpClient {
       }
     }
 
-    // JSON request headers
-    this.setHeaders({
-      'content-type': 'application/json; charset=utf-8',
-      'accept': 'application/json'
-    });
 
-    const answer = await this.askOnce(url, method, body_obj);
+    try {
+      this.setHeaders({
+        'content-type': 'application/json; charset=utf-8',
+        'accept': 'application/json'
+      });
 
-    // convert content string to object
-    if (!!answer.content) {
-      try {
-        answer.content = JSON.parse(answer.content);
-      } catch (err) {
-        throw new Error('Response content is not valid JSON.');
+      const answer = await this.askOnce(url, method, body_obj);
+
+      // convert content string to object
+      if (!!answer.content) {
+        try {
+          answer.content = JSON.parse(answer.content);
+        } catch (err) {
+          throw new Error('Response content is not valid JSON.');
+        }
       }
+
+      return answer;
+
+    } catch (err) {
+      throw err;
     }
-
-    return answer;
-
   }
 
 

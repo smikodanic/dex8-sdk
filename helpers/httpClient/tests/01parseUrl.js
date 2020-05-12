@@ -16,6 +16,14 @@ const urlObj = httpClient._parseUrl(url);
 
 console.log(urlObj);
 
+console.log('httpClient.url:: ', httpClient.url); // http://localhost:8001/www/products?category=databases
+console.log('httpClient.protocol:: ', httpClient.protocol); // http:
+console.log('httpClient.hostname:: ', httpClient.hostname); // localhost
+console.log('httpClient.port:: ', httpClient.port); // 8001
+console.log('httpClient.pathname:: ', httpClient.pathname); // /www/products
+console.log('httpClient.queryString:: ', httpClient.queryString); // ?category=databases
+
+
 
 /*
 EXAMPLE #1 --- $ node 01parseUrl.js "http://www.adsuu.com/some/thing.php?x=2&y=3"
