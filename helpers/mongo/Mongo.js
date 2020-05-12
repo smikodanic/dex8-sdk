@@ -162,21 +162,40 @@ class Mongo {
 
 
   /**
+   * Save doc to collection.
+   * @param {Object} doc - mongoose doc (object)
+   */
+  save(doc) {
+    const docObj = new this.model(doc);
+    return docObj.save();
+  }
+
+
+  /**
    * Add doc to collection.
-   * @param {Object} doc - mongoose document (object) to be saved
+   * @param {Object | Array} doc - object or array of objects
    */
   add(doc) {
     return this.model.create(doc);
   }
 
 
+
   /**
-   * Save doc to collection.
-   * @param {Object} doc - mongoose doc (object) to be saved
+   * Bulk insertion.
+   * @param {Array} docs - array of objects
+   * @param {Object} insOpts - https://mongoosejs.com/docs/api/model.html#model_Model.insertMany
    */
-  save(doc) {
-    const docObj = new this.model(doc);
-    return docObj.save();
+  insertMulti(docs, insOpts) {
+    if (!insOpts) {
+      insOpts = {
+        ordered: false, // (true) if true, will fail fast on the first error encountered and don't execute the remaining writes
+        rawResult: true, // (false) will return inserted docs
+        lean: false, // (false) if true skip schema validation
+        limit: null // (null) limits the number of documents being processed
+      };
+    }
+    return this.model.insertMany(docs, insOpts);
   }
 
 
@@ -248,15 +267,17 @@ class Mongo {
    * Update a doc.
    * @param {Object} moQuery - mongo query
    * @param {Object} docNew - new, updated document
+   * @param {Object} updOpts - https://mongoosejs.com/docs/api/model.html#model_Model.findOneAndUpdate
    */
   editOne(moQuery, docNew, updOpts) {
     if (!updOpts) {
       updOpts = {
-        new: true, // return updated document as 'result'
-        upsert: false, // whether to create the doc if it doesn't match (false)
-        runValidators: false, // validators validate the update operation against the model's schema
+        new: true, // (false) return updated document as 'result'
+        lean: true, // mongoose will return the document as a plain JavaScript object rather than a mongoose document
         strict: false, // values not defined in schema will not be saved in db (default is defined in schema options, and can be overwritten here)
-      // sort: {created_at: -1} // if multiple results are found, sets the sort order to choose which doc to update
+        upsert: false, // whether to create the doc if it doesn't match (false)
+        runValidators: false, // (false) validators validate the update operation against the model's schema
+        // sort: {created_at: -1} // if multiple results are found, sets the sort order to choose which doc to update
       };
     }
     return this.model.findOneAndUpdate(moQuery, docNew, updOpts);
