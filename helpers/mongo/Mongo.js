@@ -285,6 +285,16 @@ class Mongo {
 
 
 
+  /**
+   * Count docs by the mongo query.
+   * @param {Object} moQuery - mongo query
+   */
+  countDocs(moQuery) {
+    return this.model.count(moQuery);
+  }
+
+
+
 
 }
 
