@@ -3,6 +3,7 @@ const path = require('path');
 const fse = require('fs-extra');
 const { HttpClient } = require('../../index.js');
 const config = require('../../config.js');
+const chalk = require('chalk');
 
 
 module.exports = async () => {
@@ -39,6 +40,12 @@ module.exports = async () => {
     const url = config.apiBaseURL + '/sdk/login';
     const body =  await inquirer.prompt(questions); // {username, passsword}
     const answer = await dhc.askJSON(url, 'POST', body);
+
+    // status
+    if (answer.status !== 200) {
+      console.log(chalk.red(answer.res.content.message));
+      return;
+    }
 
 
     // create config file
