@@ -116,7 +116,7 @@ const uploadOneTask = async (taskName) => {
     // init httpClient
     const opts = {
       encodeURI: false,
-      timeout: 13000,
+      timeout: 90000,
       retry: 1,
       retryDelay: 1300,
       maxRedirects: 0,
@@ -137,7 +137,11 @@ const uploadOneTask = async (taskName) => {
     const url = config.apiBaseURL + '/sdk/upload';
     const answer = await dhc.askJSON(url, 'POST', body);
 
-    console.log(chalk.green(answer.res.content.msg));
+    if (answer.status === 200) {
+      console.log(chalk.green(answer.res.content.msg));
+    } else {
+      console.log(chalk.red(answer.statusMessage));
+    }
 
     await new Promise(resolve => setTimeout(resolve, 1300));
 

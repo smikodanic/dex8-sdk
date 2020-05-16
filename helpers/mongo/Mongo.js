@@ -290,7 +290,7 @@ class Mongo {
    * @param {Object} moQuery - mongo query
    */
   countDocs(moQuery) {
-    return this.model.count(moQuery);
+    return this.model.countDocuments(moQuery);
   }
 
 
