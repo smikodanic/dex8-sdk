@@ -3,6 +3,7 @@ const FunctionFlow = require('./helpers/functionflow/FunctionFlow_v2.1');
 const Echo = require('./helpers/echo/Echo');
 const Mongo = require('./helpers/mongo/Mongo');
 const Rand = require('./helpers/rand/Rand');
+const RobotsTxt = require('./helpers/robotsTxt/RobotsTxt');
 
 
-module.exports = { HttpClient, FunctionFlow, Echo, Mongo, Rand };
+module.exports = { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt };

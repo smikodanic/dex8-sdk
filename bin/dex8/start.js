@@ -13,7 +13,7 @@ const fse = require('fs-extra');
 const chalk = require('chalk');
 
 const dex8sdkPath = path.join(__dirname, '../../index.js');
-const { HttpClient, FunctionFlow, Echo, Mongo, Rand } = require(dex8sdkPath);
+const { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt } = require(dex8sdkPath);
 
 
 
@@ -50,6 +50,7 @@ module.exports = async (optionsObj) => {
   const echo = new Echo();
   const mongo = new Mongo();
 
+
   // string messages instead of whole object printed in linux console
   echo.short = !!short;
 
@@ -80,7 +81,7 @@ module.exports = async (optionsObj) => {
 
   /**** 6) EXECUTE main ****/
   try {
-    const lib = {ff, echo, mongo, HttpClient, Rand};
+    const lib = {ff, echo, mongo, HttpClient, Rand, RobotsTxt};
     const output = await main(input, lib);
     echo.log('output:: ', output);
     echo.log(`Task "${task_title}" is ended on ${shortNow()}`);
