@@ -54,6 +54,7 @@ class Mongo {
 
   /**
    * Connect to mongodb server.
+   * https://mongoosejs.com/docs/connections.html
    * @param {String} mo_uri - mongodb://5.189.161.70:27017/dex8-pool-01
    * @param {String} mo_usr - mongodb username
    * @param {String} mo_pass - mongodb password
@@ -66,6 +67,7 @@ class Mongo {
       useUnifiedTopology: true,
       useFindAndModify: false,
       useNewUrlParser: true,
+      useCreateIndex: true,
       autoIndex: true,
       bufferCommands: true
     };
