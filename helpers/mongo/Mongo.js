@@ -55,9 +55,7 @@ class Mongo {
   /**
    * Connect to mongodb server.
    * https://mongoosejs.com/docs/connections.html
-   * @param {String} mo_uri - mongodb://5.189.161.70:27017/dex8-pool-01
-   * @param {String} mo_usr - mongodb username
-   * @param {String} mo_pass - mongodb password
+   * @param {String} mo_uri - mongodb://user:pass@5.189.161.70:27017/dex8-pool-01
    */
   async connect(mo_uri) {
     this.mo_uri = mo_uri;
@@ -229,6 +227,25 @@ class Mongo {
             return results;
           });
       });
+  }
+
+
+  /**
+   * List documents without counting.
+   * @param {Object} moQuery - mongo query
+   * @param {Number} limit
+   * @param {Number} skip
+   * @param {String} sort
+   * @param {String} select
+   */
+  listFast(moQuery, limit, skip, sort, select) {
+    return this.model
+      .find(moQuery)
+      .limit(limit)
+      .skip(skip)
+      .sort(sort)
+      .select(select)
+      .exec();
   }
 
 

@@ -96,6 +96,8 @@ class RobotsTxt {
         this.robotsTxtObj[userAgent].disallow.push(val);
       } else if (/sitemap/i.test(line)) {
         this.robotsTxtObj[userAgent].sitemap.push(val);
+      } else if (/crawl-delay/i.test(line)) {
+        this.robotsTxtObj[userAgent].crawlDelay.push(val);
       }
 
     });
