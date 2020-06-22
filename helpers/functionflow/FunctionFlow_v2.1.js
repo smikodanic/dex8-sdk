@@ -129,6 +129,10 @@ class FunctionFlow {
         this.goTo = undefined; // reset goTo
       }
 
+      if (this.status === 'pause') { await this._delayPause(this.msPause); }
+      if (this.status === 'stop') { break; }
+      if (this.status === 'next') { this.status = 'start'; break; }
+
       const func = funcs[i];
 
       if (this.debug) { this._debugger1(this.serial.name, func, i); }
@@ -136,11 +140,6 @@ class FunctionFlow {
       this.x = await func(this.x, this.lib);
 
       if (!!this.msDelay) { await this._delayFunction(this.msDelay); }
-
-      if (this.status === 'pause') { await this._delayPause(this.msPause); }
-      if (this.status === 'stop') { break; }
-      if (this.status === 'next') { this.status = 'start'; break; }
-
 
       i++;
     } // \for
