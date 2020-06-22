@@ -338,7 +338,7 @@ class FunctionFlow {
 
 
   /**
-   * Stop execution of all funcs functions in serial(funcs) method and continue with next serial or parallel method.
+   * Stop execution of all funcs functions in serial(funcs) method and continue with next serial, one or parallel method.
    * Use it as ff.next() inside function.
    * "next" will work only inside serial() method.
    */
