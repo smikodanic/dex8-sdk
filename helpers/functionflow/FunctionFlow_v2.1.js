@@ -157,13 +157,17 @@ class FunctionFlow {
    */
   async one(func) {
     this.lastExecuted = {method: this.one.name, args: Array.from(arguments)};
+
+    if (this.status === 'pause') { await this._delayPause(this.msPause); }
+    if (this.status === 'stop') { return; }
+
+
     if (this.debug) { this._debugger1(this.one.name, func, 0); }
 
     this.x = await func(this.x, this.lib);
 
     if (!!this.msDelay) { await this._delayFunction(this.msDelay); }
 
-    if (this.status === 'pause') { await this._delayPause(this.msPause); }
 
     return this.x;
   }
