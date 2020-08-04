@@ -13,7 +13,7 @@ const fse = require('fs-extra');
 const chalk = require('chalk');
 
 const dex8sdkPath = path.join(__dirname, '../../index.js');
-const { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt } = require(dex8sdkPath);
+const { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt, CSV } = require(dex8sdkPath);
 
 
 
@@ -81,7 +81,7 @@ module.exports = async (optionsObj) => {
 
   /**** 6) EXECUTE main ****/
   try {
-    const lib = {ff, echo, mongo, HttpClient, Rand, RobotsTxt};
+    const lib = {ff, echo, mongo, HttpClient, Rand, RobotsTxt, CSV};
     const output = await main(input, lib);
     echo.log('output:: ', output);
     echo.log(`Task "${task_title}" is ended on ${shortNow()}`);
