@@ -1,4 +1,4 @@
-const CSV = require('../CSV.js');
+const {CSV} = require('../../../index.js');
 
 const fja = async () => {
 

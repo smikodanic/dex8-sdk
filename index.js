@@ -4,6 +4,7 @@ const Echo = require('./helpers/echo/Echo');
 const Mongo = require('./helpers/mongo/Mongo');
 const Rand = require('./helpers/rand/Rand');
 const RobotsTxt = require('./helpers/robotsTxt/RobotsTxt');
+const CSV = require('./helpers/CSV/CSV');
 
 
-module.exports = { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt };
+module.exports = { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt, CSV };
