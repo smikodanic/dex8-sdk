@@ -72,17 +72,17 @@ class CSV {
 
       this.fields.forEach((field, key) => {
 
-        // format field value
+        // correct & beautify field value
         let fieldValue = row[field];
 
         if (!fieldValue) {
           fieldValue = '';
         }
 
-
         if (typeof fieldValue === 'object') {
           fieldValue = JSON.stringify(fieldValue); // convert obvject into string
         }
+
         fieldValue = fieldValue.slice(0, 2000); // reduce number of characters
         fieldValue = fieldValue.replace(/\"/g, '\"'); // escape double quotes
         fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace empty spaces with just one space
@@ -113,12 +113,49 @@ class CSV {
 
 
 
+
+  /**
+   * Read CSV rows and convert it into the array of objects.
+   */
   async readRows() {
+    const opts = {
+      encoding: this.encoding,
+      flag: this.flag
+    };
+    const rows_str = await fse.readFile(this.filePath, opts);
 
+    // convert string into array
+    let rows = rows_str.split(this.rowDelimiter);
+
+    // remove first element/row (field names)
+    rows.shift();
+
+    // remove empty rows
+    rows = rows.filter(row => !!row);
+
+    // convert rows into the objects
+    rows = rows.map(row => {
+      const row_str_arr = row.split(this.fieldDelimiter);
+      const rowObj = {};
+      this.fields.forEach((field, key) => {
+        let fieldValue = row_str_arr[key];
+        fieldValue = fieldValue.replace(/^\"/, '');
+        fieldValue = fieldValue.replace(/\"$/, '');
+
+        // convert {} or []
+        if ((/^\{/.test(fieldValue) && /\}$/.test(fieldValue)) || (/^\[/.test(fieldValue) && /\]$/.test(fieldValue))) {
+          fieldValue = JSON.parse(fieldValue);
+        }
+
+        rowObj[field] = fieldValue;
+      });
+
+      return rowObj;
+    });
+
+
+    return rows;
   }
-
-
-
 
 
 
