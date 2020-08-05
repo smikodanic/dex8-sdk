@@ -155,8 +155,6 @@ class CSV {
       return rowObj;
     });
 
-    console.log('rows:::', rows);
-
 
     return rows;
   }
