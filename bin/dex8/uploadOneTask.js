@@ -61,6 +61,7 @@ const uploadOneTask = async (taskName) => {
       uf !== '.gitignore' &&
       uf !== 'conf.js' &&
       uf !== 'node_modules' &&
+      uf !== 'tmp' &&
       uf !== 'package-lock.json' &&
       uf !== 'package.json'
     ));
@@ -95,10 +96,15 @@ const uploadOneTask = async (taskName) => {
       const filePath = path.join(taskFolder, fileName);
       fse.readFile(filePath, 'utf8')
         .then(fileContent => {
+          if (!fileContent) { console.log(chalk.yellow(`---File ${fileName} is empty and will not be uploaded. Delete the file.`)); return; } // do not upload empty files
 
-          if (fileName === 'howto.html') { // howto.html
+          if (fileName === 'howto.html') { // upload howto.html
             body.howto = fileContent;
-          } else if (/.+\.js$/.test(fileName) && fileName !== 'conf.js' && !!fileContent) { // js files except conf.js which doesn't have empty content
+          } else if (/.+\.js$/.test(fileName) && fileName !== 'conf.js' && !!fileContent) { // upload js files except conf.js which doesn't have empty content
+            body.files.push({name: fileName, content: fileContent});
+          } else if (/.+\.csv$/.test(fileName)) { // upload CSV files
+            body.files.push({name: fileName, content: fileContent});
+          } else if (/.*input.*\.json$/i.test(fileName)) { // upload input JSON files
             body.files.push({name: fileName, content: fileContent});
           }
 
@@ -141,6 +147,7 @@ const uploadOneTask = async (taskName) => {
       console.log(chalk.green(answer.res.content.msg));
     } else {
       console.log(chalk.red(answer.statusMessage));
+      console.log(chalk.red(answer.res.content.message));
     }
 
     await new Promise(resolve => setTimeout(resolve, 1300));
