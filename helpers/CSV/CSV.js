@@ -139,6 +139,8 @@ class CSV {
       const rowObj = {};
       this.fields.forEach((field, key) => {
         let fieldValue = row_str_arr[key];
+        fieldValue = fieldValue.replace(/ {2,}/g, ' ');
+        fieldValue = fieldValue.trim(); // trim start & end of the string
         fieldValue = fieldValue.replace(/^\"/, '');
         fieldValue = fieldValue.replace(/\"$/, '');
 
@@ -152,6 +154,8 @@ class CSV {
 
       return rowObj;
     });
+
+    console.log('rows:::', rows);
 
 
     return rows;
