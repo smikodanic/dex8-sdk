@@ -1,10 +1,23 @@
-const HttpClient = require('./helpers/httpClient/HttpClient');
-const FunctionFlow = require('./helpers/functionflow/FunctionFlow_v2.1');
+const chalk = require('chalk');
+const cheerio = require('cheerio');
+const fse = require('fs-extra');
+const lodash = require('lodash');
+const moment = require('moment');
+const puppeteer = require('puppeteer');
+
+const CSV = require('./helpers/CSV/CSV');
 const Echo = require('./helpers/echo/Echo');
+const FunctionFlow = require('./helpers/functionflow/FunctionFlow_v2.1');
+const HttpClient = require('./helpers/httpClient/HttpClient');
 const Mongo = require('./helpers/mongo/Mongo');
 const Rand = require('./helpers/rand/Rand');
 const RobotsTxt = require('./helpers/robotsTxt/RobotsTxt');
-const CSV = require('./helpers/CSV/CSV');
 
 
-module.exports = { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt, CSV };
+const dex8sdk = {
+  chalk, cheerio, fse, lodash, moment, puppeteer,
+  CSV, Echo, FunctionFlow, HttpClient, Mongo, Rand, RobotsTxt // dex8-sdk helpers
+};
+
+
+module.exports = dex8sdk;

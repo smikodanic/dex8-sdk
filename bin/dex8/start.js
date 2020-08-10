@@ -7,17 +7,12 @@
  * SHORT ECHO PRINT
  * $ dex8 start --short
  */
-const path = require('path');
-
-const chalk = require('chalk');
-const cheerio = require('cheerio');
 const fse = require('fs-extra');
-const lodash = require('lodash');
 const moment = require('moment');
-const puppeteer = require('puppeteer');
 
+const path = require('path');
 const dex8sdkPath = path.join(__dirname, '../../index.js');
-const { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt, CSV } = require(dex8sdkPath);
+const dex8sdk = require(dex8sdkPath);
 
 
 
@@ -50,9 +45,9 @@ module.exports = async (optionsObj) => {
 
 
   /**** 3) INITIALIZE helper INSTANCES ****/
-  const ff = new FunctionFlow();
-  const echo = new Echo();
-  const mongo = new Mongo();
+  const ff = new dex8sdk.FunctionFlow();
+  const echo = new dex8sdk.Echo();
+  const mongo = new dex8sdk.Mongo();
 
 
   // string messages instead of whole object printed in linux console
@@ -68,7 +63,7 @@ module.exports = async (optionsObj) => {
   /**** 5) GET main & input ****/
   const mainPath = path.join(process.cwd(), 'main.js');
   const mainExists = await fse.pathExists(mainPath);
-  if (!mainExists) { console.log(chalk.red(`Task "${task_title}" does not have "main.js" file.`)); return;}
+  if (!mainExists) { console.log(dex8sdk.chalk.red(`Task "${task_title}" does not have "main.js" file.`)); return;}
   // delete require.cache[mainPath];
   const main = require(mainPath);
 
@@ -76,7 +71,7 @@ module.exports = async (optionsObj) => {
   if (!!input_selected) {
     const input_selectedPath = path.join(process.cwd(), input_selected);
     const inputExists = await fse.pathExists(input_selectedPath);
-    if (!inputExists) { console.log(chalk.red(`Input file does not exists: ${input_selected}`)); return;}
+    if (!inputExists) { console.log(dex8sdk.chalk.red(`Input file does not exists: ${input_selected}`)); return;}
     // delete require.cache[input_selectedPath];
     input = require(input_selectedPath);
   }
@@ -85,10 +80,7 @@ module.exports = async (optionsObj) => {
 
   /**** 6) EXECUTE main ****/
   try {
-    const lib = {
-      chalk, cheerio, fse, lodash, moment, puppeteer,
-      CSV, echo, ff, HttpClient, mongo, Rand, RobotsTxt // dex8-sdk helpers
-    };
+    const lib = {...dex8sdk, ff, echo, mongo};
     const output = await main(input, lib);
     echo.log('output:: ', output);
     echo.log(`Task "${task_title}" is ended on ${shortNow()}`);
