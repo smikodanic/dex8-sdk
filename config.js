@@ -1,3 +1,6 @@
+/**
+ * Determines with which API dex8-sdk will communicate
+ */
 const environment = process.env.NODE_ENV || 'production';
 
 

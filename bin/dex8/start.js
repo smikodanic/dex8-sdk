@@ -8,9 +8,13 @@
  * $ dex8 start --short
  */
 const path = require('path');
-const moment = require('moment');
-const fse = require('fs-extra');
+
 const chalk = require('chalk');
+const cheerio = require('cheerio');
+const fse = require('fs-extra');
+const lodash = require('lodash');
+const moment = require('moment');
+const puppeteer = require('puppeteer');
 
 const dex8sdkPath = path.join(__dirname, '../../index.js');
 const { HttpClient, FunctionFlow, Echo, Mongo, Rand, RobotsTxt, CSV } = require(dex8sdkPath);
@@ -38,7 +42,7 @@ module.exports = async (optionsObj) => {
 
   /**** 1) GET mnifest.json ****/
   const manifestPath = path.join(process.cwd(), 'manifest.json');
-  const manifest = await fse.readJSON(manifestPath);
+  const manifest = require(manifestPath);
 
 
   /**** 2) GET TASK TITLE ****/
@@ -81,7 +85,10 @@ module.exports = async (optionsObj) => {
 
   /**** 6) EXECUTE main ****/
   try {
-    const lib = {ff, echo, mongo, HttpClient, Rand, RobotsTxt, CSV};
+    const lib = {
+      chalk, cheerio, fse, lodash, moment, puppeteer,
+      CSV, echo, ff, HttpClient, mongo, Rand, RobotsTxt // dex8-sdk helpers
+    };
     const output = await main(input, lib);
     echo.log('output:: ', output);
     echo.log(`Task "${task_title}" is ended on ${shortNow()}`);

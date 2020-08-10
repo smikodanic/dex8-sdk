@@ -16,6 +16,9 @@ const update = require('./update.js');
 const download = require('./download.js');
 
 
+program
+  .storeOptionsAsProperties(false)
+  .passCommandToAction(false);
 
 
 /**

@@ -19,7 +19,7 @@ module.exports = async (taskName) => {
 
     const tf = await fse.pathExists(destDir);
     if (tf) {
-      console.log(`Task "${taskName}" initialized and folder is created. Now move to that folder "$ cd ${taskName}" and run "$ npm run inst" !`);
+      console.log(`Task "${taskName}" initialized and folder is created.`);
     }
 
 
