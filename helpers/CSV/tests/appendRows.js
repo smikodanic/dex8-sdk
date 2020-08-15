@@ -3,7 +3,7 @@ const {CSV} = require('../../../index.js');
 const fja = async () => {
 
   const csvOpts = {
-    filePath: './writed.csv',
+    filePath: './appended.csv',
     encoding: 'utf8',
     mode: 0o664,
 
@@ -20,14 +20,14 @@ const fja = async () => {
   // write rows 3x with same array
   for (let i = 1; i <=3; i++) {
     const rows = [
-      {url: 'www.site1.com', name: 'Peter', old: 55, size: 'M'},
-      {url1: 'www.site1.com', name: 'Peter', old: 55},
+      {url: 'www.site2.com', name: 'Peter', old: 35, size: 'M'},
+      {url1: 'www.site3.com', name: 'Peter3', old: 28},
       {url: 'www.site2.com', name2: 'John'},
       {url: {web: 'test1.net'}, name: 'Ana'},
       {url: ['test2.net'], name: 'Ivan'},
       {url: [{web: 'test3.net'}], name: 'Sonja'},
     ];
-    await csv.writeRows(rows);
+    await csv.appendRows(rows);
   }
 
 

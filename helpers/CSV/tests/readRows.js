@@ -3,10 +3,9 @@ const {CSV} = require('../../../index.js');
 const fja = async () => {
 
   const csvOpts = {
-    filePath: './csvInput.csv',
-
+    filePath: './appended.csv',
     encoding: 'utf8',
-    flag: 'a+',
+    mode: 0o644,
 
     fields: ['url', 'name', 'size'], // only these fields will be effective
     fieldDelimiter: ',',
@@ -16,7 +15,7 @@ const fja = async () => {
 
 
   const rows = await csv.readRows();
-  console.log(rows);
+  console.log('rows in total:: ', rows.length);
   console.log(JSON.stringify(rows, null, 4));
 };
 
