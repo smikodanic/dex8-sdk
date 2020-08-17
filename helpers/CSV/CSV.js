@@ -216,13 +216,19 @@ class CSV {
     // correct & beautify field value
     let fieldValue = row[field];
 
-    if (!fieldValue) {
+    if (!fieldValue && fieldValue !== 0) {
       fieldValue = '';
     }
 
+    // convert into the string because CSV fields are strings
     if (typeof fieldValue === 'object') {
       fieldValue = JSON.stringify(fieldValue); // convert object into string
+    } else if (typeof fieldValue === 'number') {
+      fieldValue = fieldValue.toString();
+    } else if (typeof fieldValue === 'boolean') {
+      fieldValue = fieldValue ? 'true' : 'false';
     }
+
 
     fieldValue = fieldValue.slice(0, 2000); // reduce number of characters
     fieldValue = fieldValue.replace(/\"/g, '\"'); // escape double quotes
