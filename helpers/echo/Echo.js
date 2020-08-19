@@ -39,6 +39,7 @@ class Echo {
       str: undefined,
       obj: undefined,
       err: undefined,
+      img: undefined,
       time: '',
       room
     };
@@ -64,8 +65,8 @@ class Echo {
    * @returns {Promise<any>} - can be used in async function as "await echo.send()"
    */
   send(echoObj) {
-    const {str, obj, err} = echoObj; // destructuring object
-    this._format(str, obj, err);
+    const {str, obj, err, img} = echoObj; // destructuring object
+    this._format(str, obj, err, img);
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -91,8 +92,8 @@ class Echo {
       return s;
     });
 
-    const str = strings.join(' '); // join with space  ::  echo.msg('a', 'b') ---> ['a', 'b'] ---> 'a b'
-    this._format(str, null, null);
+    const str = strings.join(' '); // join with space  ::  echo.log('a', 'b') ---> ['a', 'b'] ---> 'a b'
+    this._format(str, null, null, '');
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -105,7 +106,7 @@ class Echo {
    * @returns {Promise<any>} - can be used in async function as "await echo.objekt()"
    */
   objekt(obj) {
-    this._format('', obj, null);
+    this._format('', obj, null, '');
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -118,7 +119,20 @@ class Echo {
    * @returns {Promise<any>} - can be used in async function as "await echo.error()"
    */
   error(err) {
-    this._format('', null, err);
+    this._format('', null, err, '');
+    this._log();
+    return Promise.resolve(this.msgObj);
+  }
+
+
+  /**
+   * Method used in task functions as echo.image('v1w4fnDx9N5fD4t2ft93Y/88IaZLbaPB8+3O1ef+/+jfXqzzf...');
+   * Send image in the base64 format to API via websocket.
+   * @param {String} img_b64 - image in the base64 (string) format
+   * @returns {Promise<any>} - can be used in async function as "await echo.image()"
+   */
+  image(img_b64) {
+    this._format('', null, null, img_b64);
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -133,8 +147,9 @@ class Echo {
    * @param {String} str - echoed string
    * @param {Object} obj - echoed object {uri, body}
    * @param {Error} err - echoed error {message, stack}
+   * @param {String} img - echoed image in base64 format
    */
-  _format(str, obj, err) {
+  _format(str, obj, err, img) {
     if (!str) { str = undefined; }
 
     if (!obj) { obj = undefined;}
@@ -149,10 +164,12 @@ class Echo {
       };
     }
 
+    if (!img) { img = undefined; }
+
     const time = moment().toISOString();
     const room = this.room;
 
-    this.msgObj = Object.assign(this.msgObj, {str, obj, err, time, room}); // {user_id, robot_id, task_id, str, obj, err, time, room}
+    this.msgObj = Object.assign(this.msgObj, {str, obj, err, img, time, room}); // {user_id, robot_id, task_id, str, obj, err, img, time, room}
   }
 
 
@@ -191,21 +208,25 @@ class Echo {
       /* SHORT PRINT */
       const time = moment(this.msgObj.time).format('DD.MMM.YYYY HH:mm:ss.SSS');
       if (!!this.msgObj && !!this.msgObj.str) {
-        console.log(chalk.greenBright(`(${time})`, this.msgObj.str)); // print str
+        console.log(chalk.greenBright(`(${time})`, this.msgObj.str)); // print string
       } else if (!!this.msgObj && !!this.msgObj.obj) {
         console.log(chalk.blueBright(`(${time})`, JSON.stringify(this.msgObj.obj))); // print stringified object
       } else if (!!this.msgObj && !!this.msgObj.err) { // print error
         console.log(chalk.redBright(`(${time})`, JSON.stringify(this.msgObj.err.message)));
+      } else if (!!this.msgObj && !!this.msgObj.img) { // print base64 image
+        console.log(chalk.whiteBright(`(${time})`, JSON.stringify(this.msgObj.img)));
       }
     } else {
       /* LONG PRINT */
       const msg = JSON.stringify(this.msgObj, null, 4);
       if (!!this.msgObj && !!this.msgObj.str) {
-        console.log(chalk.greenBright(msg)); // print msg
+        console.log(chalk.greenBright(msg)); // print string
       } else if (!!this.msgObj && !!this.msgObj.obj) {
         console.log(chalk.blueBright(msg)); // print object
       } else if (!!this.msgObj && !!this.msgObj.err) {
         console.log(chalk.redBright(msg)); // print error
+      } else if (!!this.msgObj && !!this.msgObj.img) {
+        console.log(chalk.whiteBright(msg)); // print base64 image
       }
     }
   }
