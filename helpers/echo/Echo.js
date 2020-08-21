@@ -15,15 +15,16 @@
 
 const chalk = require('chalk');
 const moment = require('moment');
+const inquirer = require('inquirer');
 
 
 
 class Echo {
 
-  constructor(room = 'room_panelTaskdeploy', socket, user_id, robot_id, task_id) {
+  constructor(room, socket, user_id, robot_id, task_id) {
 
     this.socket = socket;
-    this.room = room;
+    this.room = room || 'room_panelTaskdeploy';
     this.user_id = user_id;
     this.robot_id = robot_id;
     this.task_id = task_id;
@@ -40,6 +41,7 @@ class Echo {
       obj: undefined,
       err: undefined,
       img: undefined,
+      inp: undefined,
       time: '',
       room
     };
@@ -57,27 +59,12 @@ class Echo {
   }
 
 
-
-  /**
-   * Method used in task functions as echo.send({str: string, obj: any, err: Error, time: Date});
-   * Send message object.
-   * @param {Object} echoObj - {str, obj, err}
-   * @returns {Promise<any>} - can be used in async function as "await echo.send()"
-   */
-  send(echoObj) {
-    const {str, obj, err, img} = echoObj; // destructuring object
-    this._format(str, obj, err, img);
-    this._log();
-    return Promise.resolve(this.msgObj);
-  }
-
-
   /**
    * Method used in task functions as echo.log('My message');
    * Send comma separated strings to API via websocket and/or to linux console.
    * Use multiple parameters like in console.log --> echo.log('one', 'two')
    * @param {String} strings - strings separated by comma, for example echo.log('one', 'two')
-   * @returns {Promise<any>} - can be used in async function as "await echo.log()"
+   * @return {Promise<any>} - can be used in async function as "await echo.log()"
    */
   log(...strings) { // ... is "rest parameters" operator
     // if strings is object then convert it into string
@@ -93,7 +80,7 @@ class Echo {
     });
 
     const str = strings.join(' '); // join with space  ::  echo.log('a', 'b') ---> ['a', 'b'] ---> 'a b'
-    this._format(str, null, null, '');
+    this._format(str, null, null, '', '');
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -103,10 +90,10 @@ class Echo {
    * Method used in task functions as echo.objekt({uri: 'deployment/changeaction/5e0246a283cf516d4b788f43', {action: 'stop'}});
    * Send object to API via websocket and/or to linux console.
    * @param {Object} obj - object
-   * @returns {Promise<any>} - can be used in async function as "await echo.objekt()"
+   * @return {Promise<any>} - can be used in async function as "await echo.objekt()"
    */
   objekt(obj) {
-    this._format('', obj, null, '');
+    this._format('', obj, null, '', '');
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -116,10 +103,10 @@ class Echo {
    * Method used in task functions as echo.error(new Error('Some intentional error'));
    * Send error to API via websocket and/or to linux console.
    * @param {Error} err - some error, for example new Error('Scraper error')
-   * @returns {Promise<any>} - can be used in async function as "await echo.error()"
+   * @return {Promise<any>} - can be used in async function as "await echo.error()"
    */
   error(err) {
-    this._format('', null, err, '');
+    this._format('', null, err, '', '');
     this._log();
     return Promise.resolve(this.msgObj);
   }
@@ -129,12 +116,49 @@ class Echo {
    * Method used in task functions as echo.image('v1w4fnDx9N5fD4t2ft93Y/88IaZLbaPB8+3O1ef+/+jfXqzzf...');
    * Send image in the base64 format to API via websocket.
    * @param {String} img_b64 - image in the base64 (string) format
-   * @returns {Promise<any>} - can be used in async function as "await echo.image()"
+   * @return {Promise<any>} - can be used in async function as "await echo.image()"
    */
   image(img_b64) {
-    this._format('', null, null, img_b64);
+    this._format('', null, null, img_b64, '');
     this._log();
     return Promise.resolve(this.msgObj);
+  }
+
+
+  /**
+   * Method used in task functions as echo.input();
+   * Send input which should be listened with the listen() method.
+   * @param {String} inp - text in front of the input field (label)
+   * @return {Promise<any>} - can be used in async function as "await echo.input(inp)"
+   */
+  input(inp) {
+    this._format('', null, null, '', inp);
+    this._log();
+    return Promise.resolve(this.msgObj);
+  }
+
+
+  /**
+   * Listen for the first message from the web panel or API
+   * @return {Promise<any>} - can be used in async function as "const msg = await echo.listen()"
+   */
+  async listen() {
+    if (!!this.socket) { // listen input from the Web Panel
+      return new Promise((resolve, reject) => {
+        this.socket.on('room_echoInputs', msg => {
+          resolve(msg);
+        });
+        setTimeout(() => {
+          reject(new Error('Echo input stopped to listen due to timeout of 1 minute.'));
+        }, 60000);
+      });
+    } else { // listen input from the Linux Console
+      const questions = [
+        {type: 'input', name: 'inp', message: 'input:', default: ''}
+      ];
+      const answers =  await inquirer.prompt(questions);
+      return answers.inp;
+    }
   }
 
 
@@ -148,8 +172,9 @@ class Echo {
    * @param {Object} obj - echoed object {uri, body}
    * @param {Error} err - echoed error {message, stack}
    * @param {String} img - echoed image in base64 format
+   * @param {String} inp - echoed label, a text in front of the input field
    */
-  _format(str, obj, err, img) {
+  _format(str, obj, err, img, inp) {
     if (!str) { str = undefined; }
 
     if (!obj) { obj = undefined;}
@@ -165,11 +190,12 @@ class Echo {
     }
 
     if (!img) { img = undefined; }
+    if (!inp) { inp = undefined; }
 
     const time = moment().toISOString();
     const room = this.room;
 
-    this.msgObj = Object.assign(this.msgObj, {str, obj, err, img, time, room}); // {user_id, robot_id, task_id, str, obj, err, img, time, room}
+    this.msgObj = Object.assign(this.msgObj, {str, obj, err, img, inp, time, room}); // {user_id, robot_id, task_id, str, obj, err, img, inp, time, room}
   }
 
 
@@ -214,7 +240,9 @@ class Echo {
       } else if (!!this.msgObj && !!this.msgObj.err) { // print error
         console.log(chalk.redBright(`(${time})`, JSON.stringify(this.msgObj.err.message)));
       } else if (!!this.msgObj && !!this.msgObj.img) { // print base64 image
-        console.log(chalk.whiteBright(`(${time})`, JSON.stringify(this.msgObj.img)));
+        console.log(chalk.yellowBright(`(${time})`, JSON.stringify(this.msgObj.img)));
+      } else if (!!this.msgObj && !!this.msgObj.inp) { // print input label message
+        console.log(chalk.whiteBright(`(${time})`, JSON.stringify(this.msgObj.inp)));
       }
     } else {
       /* LONG PRINT */
@@ -226,7 +254,9 @@ class Echo {
       } else if (!!this.msgObj && !!this.msgObj.err) {
         console.log(chalk.redBright(msg)); // print error
       } else if (!!this.msgObj && !!this.msgObj.img) {
-        console.log(chalk.whiteBright(msg)); // print base64 image
+        console.log(chalk.yellowBright(msg)); // print base64 image
+      } else if (!!this.msgObj && !!this.msgObj.inp) {
+        console.log(chalk.whiteBright(msg)); // print input label message
       }
     }
   }
