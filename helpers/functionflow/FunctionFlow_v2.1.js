@@ -253,6 +253,11 @@ class FunctionFlow {
       if (this.status === 'pause')  { await this._delayPause(this.msPause); } // pause repeat
       if (this.status === 'stop' || this.jumpTo === Infinity)  { break; } // stop all repeats and exit
 
+      if (this.debug) { this._debugger2(this.iteration, this.repeat.name, method); }
+
+      this.x = await this[method](...args);
+
+
       if (!!this.jumpTo) { // stop only current repeat - redefine i with this.jumpTo
         i = this.jumpTo;
         this.jumpTo = undefined; // reset "jumpTo" for the next "repeat()" usage
@@ -260,9 +265,7 @@ class FunctionFlow {
         i++;
       }
 
-      if (this.debug) { this._debugger2(this.iteration, this.repeat.name, method); }
 
-      this.x = await this[method](...args);
     }
 
     return this.x;
