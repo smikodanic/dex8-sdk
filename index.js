@@ -4,6 +4,7 @@ const fse = require('fs-extra');
 const lodash = require('lodash');
 const moment = require('moment');
 const puppeteer = require('puppeteer');
+const mongoose = require('mongoose');
 
 const CSV = require('./helpers/CSV/CSV');
 const Echo = require('./helpers/echo/Echo');
@@ -15,7 +16,7 @@ const RobotsTxt = require('./helpers/robotsTxt/RobotsTxt');
 
 
 const dex8sdk = {
-  chalk, cheerio, fse, lodash, moment, puppeteer,
+  chalk, cheerio, fse, lodash, moment, puppeteer, mongoose,
   CSV, Echo, FunctionFlow, HttpClient, Mongo, Rand, RobotsTxt // dex8-sdk helpers
 };
 
