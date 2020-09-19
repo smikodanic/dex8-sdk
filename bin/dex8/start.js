@@ -35,7 +35,7 @@ module.exports = async (optionsObj) => {
   const input_selected = optionsObj.input;
 
 
-  /**** 1) GET mnifest.json ****/
+  /**** 1) GET manifest.json ****/
   const manifestPath = path.join(process.cwd(), 'manifest.json');
   const manifest = require(manifestPath);
 
