@@ -85,9 +85,9 @@ module.exports = async (optionsObj) => {
     echo.log('output:: ', output);
     echo.log(`Task "${task_title}" is ended on ${shortNow()}`);
   } catch (err) {
-    echo.error(new Error(`Task "${task_title}" exited with error on ${shortNow()}`));
-    await ff.delay(1300);
     echo.error(err);
+    await ff.delay(1300);
+    echo.error(new Error(`Task "${task_title}" exited with error on ${shortNow()}`));
   }
 
 };
