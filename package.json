@@ -1,6 +1,6 @@
 {
   "name": "dex8-sdk",
-  "version": "2.8.3",
+  "version": "2.8.4",
   "title": "DEX8 SDK",
   "description": "DEX8 SDK is a library which helps developers to create DEX8 crawler, scraper tasks or automated serverless scripts.",
   "keywords": [
