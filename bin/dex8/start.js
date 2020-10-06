@@ -13,6 +13,7 @@ const moment = require('moment');
 const path = require('path');
 const dex8sdkPath = path.join(__dirname, '../../index.js');
 const dex8sdk = require(dex8sdkPath);
+const RuntimeCommands = require('./RuntimeCommands');
 
 
 
@@ -78,7 +79,13 @@ module.exports = async (optionsObj) => {
 
 
 
-  /**** 6) EXECUTE main ****/
+  /**** 6) LISTEN for runtime commands ****/
+  const rc = new RuntimeCommands(ff);
+  rc.listen();
+
+
+
+  /**** 7) EXECUTE main ****/
   try {
     const lib = {...dex8sdk, ff, echo, mongo};
     const output = await main(input, lib);
