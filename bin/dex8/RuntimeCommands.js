@@ -49,7 +49,10 @@ class RuntimeCommands {
         console.log(':input loaded\n');
         this._loadInput(line);
       } else if (line === 'i') {
-        this._showInput(line);
+        this._showInput();
+
+      } else if (line === 'x') {
+        this._showX(line);
 
       } else if (line === 'e') {
         console.log(':eval');
@@ -150,7 +153,18 @@ class RuntimeCommands {
     } catch (err) {
       console.log(chalk.red(err.message));
     }
+  }
 
+
+  /**
+   * Show the "x" a transitional variable.
+   */
+  _showX() {
+    try {
+      console.log(this.ff.x);
+    } catch (err) {
+      console.log(chalk.red(err.message));
+    }
   }
 
 
