@@ -90,7 +90,7 @@ class RuntimeCommands {
     try {
       this.ff.pause();
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -102,7 +102,7 @@ class RuntimeCommands {
     try {
       this.ff.start();
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -114,7 +114,7 @@ class RuntimeCommands {
     try {
       this.ff.stop();
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -138,7 +138,7 @@ class RuntimeCommands {
       delete require.cache[inputFile_path]; // IMPORTANT!!! Delete npm cache because we want to have fresh file data
       this.ff.lib.input = require(inputFile_path);
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -151,7 +151,7 @@ class RuntimeCommands {
     try {
       console.log(this.ff.lib.input);
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -163,7 +163,7 @@ class RuntimeCommands {
     try {
       console.log(this.ff.x);
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -203,7 +203,7 @@ class RuntimeCommands {
       await this.ff.serial(funcs);
 
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -217,7 +217,7 @@ class RuntimeCommands {
     try {
       eval(code);
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
@@ -233,7 +233,7 @@ class RuntimeCommands {
       const func = new AsyncFunction('x', 'lib', ff_code);
       await this.ff.one(func);
     } catch (err) {
-      console.log(chalk.red(err.message));
+      console.log(chalk.red(err.stack));
     }
   }
 
