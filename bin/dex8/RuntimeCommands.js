@@ -44,9 +44,12 @@ class RuntimeCommands {
       } else if (line === 'k') {
         console.log(':killed\n');
         this._kill();
+
       } else if (/input/i.test(line) && /\.json/i.test(line)) {
-        console.log(':input load\n');
+        console.log(':input loaded\n');
         this._loadInput(line);
+      } else if (line === 'i') {
+        this._showInput(line);
 
       } else if (line === 'e') {
         console.log(':eval');
@@ -131,6 +134,19 @@ class RuntimeCommands {
       const inputFile_path = path.join(process.cwd(), inputFile);
       delete require.cache[inputFile_path]; // IMPORTANT!!! Delete npm cache because we want to have fresh file data
       this.ff.lib.input = require(inputFile_path);
+    } catch (err) {
+      console.log(chalk.red(err.message));
+    }
+  }
+
+
+
+  /**
+   * Show the input JSON file. Input must be injected into the ff.lib -> ff.LibAdd({input});
+   */
+  _showInput() {
+    try {
+      console.log(this.ff.lib.input);
     } catch (err) {
       console.log(chalk.red(err.message));
     }
