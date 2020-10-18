@@ -52,7 +52,11 @@ class RuntimeCommands {
         this._showInput();
 
       } else if (line === 'x') {
-        this._showX(line);
+        console.log(':show x');
+        this._showX();
+      } else if (/^x\./.test(line)) {
+        console.log(':set x field');
+        this._setupXfield(line);
 
       } else if (line === 'e') {
         console.log(':eval');
@@ -156,12 +160,51 @@ class RuntimeCommands {
   }
 
 
+
   /**
    * Show the "x" a transitional variable.
    */
   _showX() {
     try {
       console.log(this.ff.x);
+    } catch (err) {
+      console.log(chalk.red(err.stack));
+    }
+  }
+
+
+
+  /**
+   * Setup "x.field" value.
+   * For example: x.a = ' some string ' or x.a = " some string"
+   */
+  _setupXfield(line) {
+    try {
+      const matched = line.match(/(.*)\s*=\s*(.*)/);
+
+      // get field
+      let field = matched[1].trim();
+      field = field.replace(/^x\./, ''); // remove x.
+
+      // get value
+      let val = matched[2].trim();
+      val = val.replace('^\'', '').replace('\'$', ''); // remove single quote '
+      val = val.replace('^\"', '').replace('\"$', ''); // remove double quote "
+
+      // eval number, string, boolean or object
+      if (/^{/.test(val)) {
+        try {
+          val = JSON.parse(val);
+        } catch (err) {
+          throw new Error('Enter valid JSON (use double quotes ")!');
+        }
+      } else {
+        val = eval(val);
+      }
+
+      this.ff.x[field] = val;
+      console.log(`new value:: x.${field} = ${val}`);
+
     } catch (err) {
       console.log(chalk.red(err.stack));
     }
@@ -195,7 +238,7 @@ class RuntimeCommands {
           func = require(file_path);
           funcs.push(func);
         } else {
-          throw new Error(`No function: ${file_path}`);
+          throw new Error(`Function NOT FOUND: ${file_path}`);
         }
 
       }
