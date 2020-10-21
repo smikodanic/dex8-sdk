@@ -1,5 +1,6 @@
 /**
  * $ node 30askJSON_GET.js <url>
+ * $ node 30askJSON_GET.js https://jsonplaceholder.typicode.com/posts/1
  */
 const util = require('util');
 const HttpClient = require('../HttpClient');
@@ -28,10 +29,15 @@ const getJSON = async() => {
 
   try {
     const dhc = new HttpClient(opts);
-    const answer = await dhc.askJSON(url);
+    const answer = await dhc.askJSON(url, 'GET');
 
     console.log('answer:');
     console.log(util.inspect(answer, false, 3, true));
+
+
+    // another request
+    const answer2 = await dhc.askJSON('https://jsonplaceholder.typicode.com/posts/2');
+    console.log('\n\nanswer2::', answer2);
 
   } catch (err) {
     throw err;

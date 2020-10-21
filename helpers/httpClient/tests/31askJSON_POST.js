@@ -1,5 +1,6 @@
 /**
  * $ node 31askJSON_POST.js <url> <body_str>
+ * $ node 31askJSON_POST.js https://jsonplaceholder.typicode.com/posts "{\"x\": 78}"
  * Example shows how to proceed body as a string in JSON format.
  */
 const chalk = require('chalk');

@@ -229,7 +229,7 @@ class HttpClient {
       statusMessage: '',
       httpVersion: undefined,
       gzip: false,
-      https: /^https/.test(this.protocol),
+      https: false,
       // remoteAddress: // TODO
       // referrerPolicy: // TODO
       req: {
@@ -251,7 +251,8 @@ class HttpClient {
     // check and correct URL
     try {
       url = this._parseUrl(url);
-      answer.url = url;
+      answer.requestURL = url;
+      answer.https = /^https/.test(this.protocol);
     } catch (err) {
       // if URL is not properly defined
       const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
@@ -284,7 +285,7 @@ class HttpClient {
 
     /*** 2) add body to HTTP request ***/
     if (!!body_obj && !/GET/i.test(method)) {
-      answer.payload = body_obj;
+      answer.req.payload = body_obj;
       const body_str = JSON.stringify(body_obj);
       this.headers['content-length'] = body_str.length;
       clientRequest.write(body_str);
