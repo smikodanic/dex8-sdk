@@ -31,6 +31,7 @@ class FunctionFlow {
 
     // iteration properties
     this.lastExecuted = {method: '', args: []}; // last executed FunctionFlow bundle method (serial, one, parallel, ...)
+    this.executedBundle_arr = []; // push all executed FunctionFlow bundle methods (serial, one, parallel, ...) during runtime
     this.iteration = 0; // current iteration in repeat method
     this.iteration_max; // max number of iterations which can be reached by repeat() method - defined with n in repeat(n) method
     this.jumpTo; // jump to repeat() iteration
@@ -83,7 +84,7 @@ class FunctionFlow {
 
   /**
    * Add libraries to libraries already injected by libInject()
-   * @param {Object} lib2 - libraries which will be added to existing this.lib
+   * @param {any} lib2 - libraries which will be added to existing this.lib
    */
   libAdd(lib2) {
     this.lib = Object.assign(this.lib, lib2);
@@ -119,6 +120,7 @@ class FunctionFlow {
    */
   async serial(funcs) {
     this.lastExecuted = {method: this.serial.name, args: Array.from(arguments)};
+    this.executedBundle_arr.push(this.lastExecuted);
 
     let i = 0;
     while (i < funcs.length) {
@@ -157,6 +159,7 @@ class FunctionFlow {
    */
   async one(func) {
     this.lastExecuted = {method: this.one.name, args: Array.from(arguments)};
+    this.executedBundle_arr.push(this.lastExecuted);
 
     if (this.status === 'pause') { await this._delayPause(this.msPause); }
     if (this.status === 'stop') { return; }
@@ -189,6 +192,8 @@ class FunctionFlow {
    */
   async parallelAll(funcs) {
     this.lastExecuted = {method: this.parallelAll.name, args: Array.from(arguments)};
+    this.executedBundle_arr.push(this.lastExecuted);
+
     if (this.debug) { this._debugger1(this.parallelAll.name, {name: ''}, 'all'); }
 
     const promisArr = funcs.map(func => {
@@ -214,6 +219,8 @@ class FunctionFlow {
    */
   async parallelRace(funcs) {
     this.lastExecuted = {method: this.parallelRace.name, args: Array.from(arguments)};
+    this.executedBundle_arr.push(this.lastExecuted);
+
     if (this.debug) { this._debugger1(this.parallelRace.name, {name: ''}, 'race'); }
 
     const promisArr = funcs.map(func => {
@@ -256,6 +263,7 @@ class FunctionFlow {
       if (this.debug) { this._debugger2(this.iteration, this.repeat.name, method); }
 
       this.x = await this[method](...args);
+      this.executedBundle_arr.pop(); // remove last element from executedBundle_arr array
 
 
       if (!!this.jumpTo) { // stop only current repeat - redefine i with this.jumpTo
@@ -265,7 +273,8 @@ class FunctionFlow {
         i++;
       }
 
-
+      console.log(JSON.stringify(this.executedBundle_arr, null, 4));
+      this.lastExecuted =  this.executedBundle_arr[this.executedBundle_arr.length - 2]; // lastExecuted as second from the end
     }
 
     return this.x;

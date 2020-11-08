@@ -175,7 +175,7 @@ class Echo {
    * @param {String} inp - echoed label, a text in front of the input field
    */
   _format(str, obj, err, img, inp) {
-    if (!str) { str = undefined; }
+    if (!str && str !== '') { str = undefined; }
 
     if (!obj) { obj = undefined;}
 
@@ -243,6 +243,8 @@ class Echo {
         console.log(chalk.yellowBright(`(${time})`, JSON.stringify(this.msgObj.img)));
       } else if (!!this.msgObj && !!this.msgObj.inp) { // print input label message
         console.log(chalk.whiteBright(`(${time})`, JSON.stringify(this.msgObj.inp)));
+      } else if (!!this.msgObj && this.msgObj.str === '') { // print empty string
+        console.log();
       }
     } else {
       /* LONG PRINT */
@@ -257,6 +259,8 @@ class Echo {
         console.log(chalk.yellowBright(msg)); // print base64 image
       } else if (!!this.msgObj && !!this.msgObj.inp) {
         console.log(chalk.whiteBright(msg)); // print input label message
+      } else if (!!this.msgObj && this.msgObj.str === '') { // print empty string
+        console.log();
       }
     }
   }
