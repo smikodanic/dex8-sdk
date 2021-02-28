@@ -482,9 +482,9 @@ class HttpClient {
     const answer = await this.askOnce(url, method, body_obj);
 
     // convert content string to object
-    if (!!answer.content) {
+    if (!!answer.res.content) {
       try {
-        answer.content = JSON.parse(answer.content);
+        answer.res.content = JSON.parse(answer.res.content);
       } catch (err) {
         throw new Error('Response content is not valid JSON.');
       }
