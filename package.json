@@ -1,6 +1,6 @@
 {
   "name": "dex8-sdk",
-  "version": "2.9.4",
+  "version": "2.9.5",
   "title": "DEX8 SDK",
   "description": "DEX8 SDK is a library which helps developers to create DEX8 crawler, scraper tasks or automated serverless scripts.",
   "keywords": [
@@ -45,7 +45,6 @@
     "inquirer": "^7.3.3",
     "moment": "^2.27.0",
     "mongoose": "^5.10.2",
-
     "fs-extra": "^9.0.1",
     "lodash": "^4.17.19",
     "cheerio": "^1.0.0-rc.3",
