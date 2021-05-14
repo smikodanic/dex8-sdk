@@ -70,34 +70,17 @@ class CSV {
   /**
    * Write multiple CSV rows.
    * CAUTION: Old content will be overwritten when this method is used.
-   * @param {Array} rows - array of objects, for example: [{url: 'www.site1.com', name: 'Peter'}, {url: 'www.site2.com', name: 'John'}]
+   * @param {Array} rows - array of objects or array of primitive values
    * @return {void}
    */
   async writeRows(rows) {
     // A. convert array of objects into the string
-    let rows_str = '';
-    rows.forEach(row => {
+    let rows_str = this._rows2str(rows);
 
-      this.fields.forEach((field, key) => {
+    // B. add CSV header
+    rows_str = this.header + rows_str;
 
-        const fieldValue = this._get_fieldValue(row, field);
-
-        // append field value
-        if (key + 1 < this.fields.length) {
-          rows_str += fieldValue + this.fieldDelimiter;
-        } else {
-          rows_str += fieldValue;
-        }
-
-      });
-
-      rows_str += this.rowDelimiter;
-    });
-
-
-    // B. write a row into the CSV file
-    rows_str = this.header + rows_str; // add CSV header
-
+    // C. write a row into the CSV file
     const opts = {
       encoding: this.encoding,
       mode: this.mode,
@@ -111,30 +94,12 @@ class CSV {
 
   /**
    * Append multiple CSV rows. New content will be added to the old content.
-   * @param {Array} rows - array of objects, for example: [{url: 'www.site1.com', name: 'Peter'}, {url: 'www.site2.com', name: 'John'}]
+   * @param {Array} rows - array of objects or array of primitive values
    * @return {void}
    */
   async appendRows(rows) {
     // A. convert array of objects into the string
-    let rows_str = '';
-    rows.forEach(row => {
-
-      this.fields.forEach((field, key) => {
-
-        const fieldValue = this._get_fieldValue(row, field);
-
-        // append field value
-        if (key + 1 < this.fields.length) {
-          rows_str += fieldValue + this.fieldDelimiter;
-        } else {
-          rows_str += fieldValue;
-        }
-
-      });
-
-      rows_str += this.rowDelimiter;
-    });
-
+    const rows_str = this._rows2str(rows);
 
     // B. append a row into the CSV file
     const opts = {
@@ -207,6 +172,27 @@ class CSV {
   /******************************************************************/
 
   /**
+   * Convert array of rows to string.
+   * Argument "rows" can be an array of objects: [{url: 'www.site1.com', name: 'Peter'}, ...] where url and name must be in the this.fields
+   * Argument "rows" can be an array of arrays: [['www.site1.com', 'Peter'], ...] where array elements must have same order as in the this.fields
+   * @param {any[]} rows - rows
+   * @returns {string}
+   */
+  _rows2str(rows) {
+    let rows_str = '';
+    rows.forEach(row => {
+      this.fields.forEach((field, key) => {
+        const fieldValue = Array.isArray(row) ? this._get_fieldValue(row, key) : this._get_fieldValue(row, field);
+        if (key + 1 < this.fields.length) { rows_str += fieldValue + this.fieldDelimiter; }
+        else { rows_str += fieldValue; }
+      });
+      rows_str += this.rowDelimiter;
+    });
+    return rows_str;
+  }
+
+
+  /**
    * Get field value from the row object after some corrections
    * @param {Object} row - CSV row in the object format: {url: 'www.site1.com', name: 'Peter'}
    * @param {String} field - field of the row object: 'url'
@@ -216,9 +202,7 @@ class CSV {
     // correct & beautify field value
     let fieldValue = row[field];
 
-    if (!fieldValue && fieldValue !== 0) {
-      fieldValue = '';
-    }
+    if (!fieldValue && fieldValue !== 0) { fieldValue = ''; }
 
     // convert into the string because CSV fields are strings
     if (typeof fieldValue === 'object') {
@@ -229,7 +213,6 @@ class CSV {
       fieldValue = fieldValue ? 'true' : 'false';
     }
 
-
     fieldValue = fieldValue.slice(0, 2000); // reduce number of characters
     fieldValue = fieldValue.replace(/\"/g, '\"'); // escape double quotes
     fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with just one space
@@ -239,8 +222,6 @@ class CSV {
 
     return fieldValue;
   }
-
-
 
 
 
