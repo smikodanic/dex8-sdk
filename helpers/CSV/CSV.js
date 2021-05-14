@@ -207,6 +207,7 @@ class CSV {
     // convert into the string because CSV fields are strings
     if (typeof fieldValue === 'object') {
       fieldValue = JSON.stringify(fieldValue); // convert object into string
+      fieldValue = fieldValue.replace(/\"/g, '\'');
     } else if (typeof fieldValue === 'number') {
       fieldValue = fieldValue.toString();
     } else if (typeof fieldValue === 'boolean') {
