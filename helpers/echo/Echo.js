@@ -5,11 +5,9 @@
  *  user_id,
  *  robot_id,
  *  task_id,
- *  str: string,
- *  obj: {uri: string, body: any},
- *  err: {message: string, stack: string},
- *  time: string,
- *  room: string
+ *  echo_method: 'log'|'objekt'|'error'|'image'|'input',
+ *  echo_msg: any,
+ *  time: string
  * }
  */
 
@@ -21,13 +19,11 @@ const inquirer = require('inquirer');
 
 class Echo {
 
-  constructor(room, socket, user_id, robot_id, task_id) {
-
-    this.socket = socket;
-    this.room = room || 'room_panelTaskdeploy';
+  constructor(user_id, robot_id, task_id, wsClient) {
     this.user_id = user_id;
     this.robot_id = robot_id;
     this.task_id = task_id;
+    this.wsClient = wsClient;
 
     // short console log -> string message instead of whole object in __console_log() method
     this.short = false;
@@ -37,34 +33,19 @@ class Echo {
       user_id,
       robot_id,
       task_id,
-      str: undefined,
-      obj: undefined,
-      err: undefined,
-      img: undefined,
-      inp: undefined,
-      time: '',
-      room
+      echo_method: '', // log, error, objekt, error, image, input
+      echo_msg: '',
+      time: ''
     };
   }
 
 
   /**
-   * Change room for echo strings, objekts or errors.
-   * For example: echo.changeRoom('room_apiRoutes).objekt({uri: '/deployments/modify/5e08907172cdfa212761907d', body: {action: stop}});
-   * @param {String} room - new room
-   */
-  changeRoom(room) {
-    this.room = room;
-    return this;
-  }
-
-
-  /**
-   * Method used in task functions as echo.log('My message');
+   * Method used in the task functions as echo.log('My message');
    * Send comma separated strings to API via websocket and/or to linux console.
    * Use multiple parameters like in console.log --> echo.log('one', 'two')
    * @param {String} strings - strings separated by comma, for example echo.log('one', 'two')
-   * @return {Promise<any>} - can be used in async function as "await echo.log()"
+   * @return {any}
    */
   log(...strings) { // ... is "rest parameters" operator
     // if strings is object then convert it into string
@@ -80,9 +61,9 @@ class Echo {
     });
 
     const str = strings.join(' '); // join with space  ::  echo.log('a', 'b') ---> ['a', 'b'] ---> 'a b'
-    this._format(str, null, null, '', '');
+    this._format('log', str);
     this._log();
-    return Promise.resolve(this.msgObj);
+    return this.msgObj;
   }
 
 
@@ -90,12 +71,12 @@ class Echo {
    * Method used in task functions as echo.objekt({uri: 'deployment/changeaction/5e0246a283cf516d4b788f43', {action: 'stop'}});
    * Send object to API via websocket and/or to linux console.
    * @param {Object} obj - object
-   * @return {Promise<any>} - can be used in async function as "await echo.objekt()"
+   * @return {any}
    */
   objekt(obj) {
-    this._format('', obj, null, '', '');
+    this._format('objekt', obj);
     this._log();
-    return Promise.resolve(this.msgObj);
+    return this.msgObj;
   }
 
 
@@ -103,12 +84,12 @@ class Echo {
    * Method used in task functions as echo.error(new Error('Some intentional error'));
    * Send error to API via websocket and/or to linux console.
    * @param {Error} err - some error, for example new Error('Scraper error')
-   * @return {Promise<any>} - can be used in async function as "await echo.error()"
+   * @return {any}
    */
   error(err) {
-    this._format('', null, err, '', '');
+    this._format('error', err);
     this._log();
-    return Promise.resolve(this.msgObj);
+    return this.msgObj;
   }
 
 
@@ -116,12 +97,12 @@ class Echo {
    * Method used in task functions as echo.image('v1w4fnDx9N5fD4t2ft93Y/88IaZLbaPB8+3O1ef+/+jfXqzzf...');
    * Send image in the base64 format to API via websocket.
    * @param {String} img_b64 - image in the base64 (string) format
-   * @return {Promise<any>} - can be used in async function as "await echo.image()"
+   * @return {any}
    */
   image(img_b64) {
-    this._format('', null, null, img_b64, '');
+    this._format('image', img_b64);
     this._log();
-    return Promise.resolve(this.msgObj);
+    return this.msgObj;
   }
 
 
@@ -129,12 +110,12 @@ class Echo {
    * Method used in task functions as echo.input();
    * Send input which should be listened with the listen() method.
    * @param {String} inp - text in front of the input field (label)
-   * @return {Promise<any>} - can be used in async function as "await echo.input(inp)"
+   * @return {any}
    */
   input(inp) {
-    this._format('', null, null, '', inp);
+    this._format('input', inp);
     this._log();
-    return Promise.resolve(this.msgObj);
+    return this.msgObj;
   }
 
 
@@ -143,10 +124,10 @@ class Echo {
    * @return {Promise<any>} - can be used in async function as "const msg = await echo.listen()"
    */
   async listen() {
-    if (!!this.socket) { // listen input from the Web Panel
+    if (!!this.wsClient) { // listen input from the Web Panel
       return new Promise((resolve, reject) => {
-        this.socket.on('room_echoInputs', msg => {
-          resolve(msg);
+        this.wsClient.once('message', (msg, msgSTR, msgBUF) => {
+          resolve(msgSTR);
         });
         setTimeout(() => {
           reject(new Error('Echo input stopped to listen due to timeout of 1 minute.'));
@@ -168,42 +149,29 @@ class Echo {
 
   /**
    * Format object which is sent by websocket or to linux console.
-   * @param {String} str - echoed string
-   * @param {Object} obj - echoed object {uri, body}
-   * @param {Error} err - echoed error {message, stack}
-   * @param {String} img - echoed image in base64 format
-   * @param {String} inp - echoed label, a text in front of the input field
+   * @param {String} echo_method - used echo method: log, error, objekt, ...
+   * @param {String} echo_msg - the echo message
    */
-  _format(str, obj, err, img, inp) {
-    if (!str && str !== '') { str = undefined; }
-
-    if (!obj) { obj = undefined;}
-
-    if (!err) {
-      err = undefined;
-    } else {
+  _format(echo_method, echo_msg) {
+    if (echo_method === 'error') {
       // convert error to object with two properties: message: string and stack: string
-      err = {
-        message: err.message,
-        stack: err.stack
+      echo_msg = {
+        message: echo_msg.message,
+        stack: echo_msg.stack
       };
     }
 
-    if (!img) { img = undefined; }
-    if (!inp) { inp = undefined; }
-
     const time = moment().toISOString();
-    const room = this.room;
 
-    this.msgObj = Object.assign(this.msgObj, {str, obj, err, img, inp, time, room}); // {user_id, robot_id, task_id, str, obj, err, img, inp, time, room}
+    this.msgObj = Object.assign(this.msgObj, {echo_method, echo_msg, time}); // {user_id, robot_id, task_id, echo_method, echo_message, time}
   }
 
 
   /**
-   * Log messages depending if socket exists or not.
+   * Log messages depending if wsClient exists or not.
    */
   _log() {
-    if (!!this.socket) {
+    if (!!this.wsClient) {
       this.__socket_log();
       this.__console_log();
     } else {
@@ -213,16 +181,10 @@ class Echo {
 
 
   /**
-   * Socket log. Send socket message.
+   * Socket log. Send wsClient message.
    */
   __socket_log() {
-    let msg;
-    try {
-      msg = JSON.stringify(this.msgObj); // convert object to string
-    } catch (err) {
-      console.log(err);
-    }
-    this.socket.emit(this.room, msg);
+    this.wsClient.route('/echo/distribute', this.msgObj);
   }
 
 
@@ -233,34 +195,32 @@ class Echo {
     if (this.short) {
       /* SHORT PRINT */
       const time = moment(this.msgObj.time).format('DD.MMM.YYYY HH:mm:ss.SSS');
-      if (!!this.msgObj && !!this.msgObj.str) {
-        console.log(chalk.greenBright(`(${time})`, this.msgObj.str)); // print string
-      } else if (!!this.msgObj && !!this.msgObj.obj) {
-        console.log(chalk.blueBright(`(${time})`, JSON.stringify(this.msgObj.obj))); // print stringified object
-      } else if (!!this.msgObj && !!this.msgObj.err) { // print error
-        console.log(chalk.redBright(`(${time})`, JSON.stringify(this.msgObj.err.message)));
-      } else if (!!this.msgObj && !!this.msgObj.img) { // print base64 image
-        console.log(chalk.yellowBright(`(${time})`, JSON.stringify(this.msgObj.img)));
-      } else if (!!this.msgObj && !!this.msgObj.inp) { // print input label message
-        console.log(chalk.whiteBright(`(${time})`, JSON.stringify(this.msgObj.inp)));
-      } else if (!!this.msgObj && this.msgObj.str === '') { // print empty string
-        console.log();
+      if (!!this.msgObj && this.msgObj.echo_method === 'log') {
+        if (this.msgObj.echo_msg === '') { console.log(); return; }
+        console.log(chalk.greenBright(`(${time})`, this.msgObj.echo_msg)); // print string
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'objekt') {
+        console.log(chalk.blueBright(`(${time})`, JSON.stringify(this.msgObj.echo_msg))); // print stringified object
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'error') { // print error
+        console.log(chalk.redBright(`(${time})`, JSON.stringify(this.msgObj.echo_msg.message)));
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'image') { // print base64 image
+        console.log(chalk.yellowBright(`(${time})`, JSON.stringify(this.msgObj.echo_msg)));
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'input') { // print input label message
+        console.log(chalk.whiteBright(`(${time})`, JSON.stringify(this.msgObj.echo_msg)));
       }
     } else {
       /* LONG PRINT */
       const msg = JSON.stringify(this.msgObj, null, 4);
-      if (!!this.msgObj && !!this.msgObj.str) {
+      if (!!this.msgObj && this.msgObj.echo_method === 'log') {
+        if (this.msgObj.echo_msg === '') { console.log(); return; }
         console.log(chalk.greenBright(msg)); // print string
-      } else if (!!this.msgObj && !!this.msgObj.obj) {
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'objekt') {
         console.log(chalk.blueBright(msg)); // print object
-      } else if (!!this.msgObj && !!this.msgObj.err) {
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'error') {
         console.log(chalk.redBright(msg)); // print error
-      } else if (!!this.msgObj && !!this.msgObj.img) {
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'image') {
         console.log(chalk.yellowBright(msg)); // print base64 image
-      } else if (!!this.msgObj && !!this.msgObj.inp) {
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'input') {
         console.log(chalk.whiteBright(msg)); // print input label message
-      } else if (!!this.msgObj && this.msgObj.str === '') { // print empty string
-        console.log();
       }
     }
   }
