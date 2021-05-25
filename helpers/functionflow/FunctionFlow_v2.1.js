@@ -3,8 +3,8 @@
  */
 
 const util = require('util');
-const events = require('events');
-const eventEmitter = new events.EventEmitter();
+const { EventEmitter } = require('events');
+
 
 
 
@@ -26,7 +26,9 @@ class FunctionFlow {
 
     // operational properties
     this.status = 'start', // start | stop | pause
-    this.delayID; // setTimeout ID
+    this.delayID1; // setTimeout ID delay()
+    this.delayID2; // setTimeout ID _delayFunction()
+    this.delayID3; // setTimeout ID _delayPause()
     this.goTo; // go to funcs index (a function within serial(funcs) method)
 
     // iteration properties
@@ -34,6 +36,8 @@ class FunctionFlow {
     this.iteration = 0; // current iteration in repeat method
     this.iteration_max; // max number of iterations which can be reached by repeat() method - defined with n in repeat(n) method
     this.jumpTo; // jump to repeat() iteration
+
+    this.eventEmitter = new EventEmitter();
   }
 
 
@@ -313,8 +317,8 @@ class FunctionFlow {
 
     if (this.status === 'pause' || this.status === 'stop') {
       this.status = 'start';
-      eventEmitter.emit('start');
-      this.delayRemove();
+      this.eventEmitter.emit('start');
+      this.delaysRemove();
     } else {
       throw new Error('Start not allowed. Status must be "pause" or "stop".');
     }
@@ -386,11 +390,11 @@ class FunctionFlow {
    * @param {Number} ms - delay in miliseconds. If ms=-1 then infinite delay.
    */
   delay(ms) {
-    this.delayRemove(); // initially remove previous delays
+    this.delaysRemove(); // initially remove previous delays
     if (this.debug) { this._debugger3(this.delay.name, ms); }
 
     const promis = new Promise(resolve => {
-      this.delayID = setTimeout(resolve, ms); // keep promis in 'pending' state until setTimeout is not finished
+      this.delayID1 = setTimeout(resolve, ms); // keep promis in 'pending' state until setTimeout is not finished
     });
 
     return promis;
@@ -411,10 +415,12 @@ class FunctionFlow {
 
 
   /**
-   * Remove delay instantly.
+   * Remove all delays instantly.
    */
-  delayRemove() {
-    clearTimeout(this.delayID);
+  delaysRemove() {
+    clearTimeout(this.delayID1);
+    clearTimeout(this.delayID2);
+    clearTimeout(this.delayID3);
   }
 
 
@@ -432,9 +438,9 @@ class FunctionFlow {
    * @param {Number} msDelay - delay in miliseconds. If msDelay=-1 then infinite delay.
    */
   _delayFunction(msDelay) {
-    this.delayRemove(); // initially remove previous delays
+    this.delaysRemove(); // initially remove previous delays
     const promis = new Promise(resolve => {
-      this.delayID = setTimeout(resolve, msDelay); // keep promis in 'pending' state until setTimeout is not finished
+      this.delayID2 = setTimeout(resolve, msDelay); // keep promis in 'pending' state until setTimeout is not finished
     });
 
     return promis;
@@ -445,19 +451,19 @@ class FunctionFlow {
    * Make big, pause delay.
    */
   _delayPause() {
-    this.delayRemove(); // initially remove previous delays
+    this.delaysRemove(); // initially remove previous delays
 
     /* promis will be resolved either by eventEmitter or by setTimeout */
     const promis = new Promise(resolve => {
       // keep promis in 'pending' state until 'start' event come
       if (this.status === 'pause') {
-        eventEmitter.on('start', () => {
+        this.eventEmitter.on('start', () => {
           resolve();
         });
       }
 
       // keep promis in 'pending' state until setTimeout is not finished
-      this.delayID = setTimeout(resolve, 3 * 24 * 60 * 60 * 1000); // delay of 3 days
+      this.delayID3 = setTimeout(resolve, 3 * 24 * 60 * 60 * 1000); // delay of 3 days
     });
 
     return promis;
