@@ -26,9 +26,8 @@ class FunctionFlow {
 
     // operational properties
     this.status = 'start', // start | stop | pause
-    this.delayID1; // setTimeout ID delay()
-    this.delayID2; // setTimeout ID _delayFunction()
-    this.delayID3; // setTimeout ID _delayPause()
+    this.delayID1; // setTimeout ID _delayFunction()
+    this.delayID2; // setTimeout ID _delayPause()
     this.goTo; // go to funcs index (a function within serial(funcs) method)
 
     // iteration properties
@@ -389,15 +388,9 @@ class FunctionFlow {
    * Make delay.
    * @param {Number} ms - delay in miliseconds. If ms=-1 then infinite delay.
    */
-  delay(ms) {
-    this.delaysRemove(); // initially remove previous delays
+  async delay(ms) {
     if (this.debug) { this._debugger3(this.delay.name, ms); }
-
-    const promis = new Promise(resolve => {
-      this.delayID1 = setTimeout(resolve, ms); // keep promis in 'pending' state until setTimeout is not finished
-    });
-
-    return promis;
+    await new Promise(resolve => setTimeout(resolve, ms));
   }
 
 
@@ -406,11 +399,11 @@ class FunctionFlow {
    * @param {Number} msMin - min miliseconds: 3000
    * @param {Number} msMax - max miliseconds: 5000
    */
-  delayRnd(msMin = 0, msMax = 1000) {
+  async delayRnd(msMin = 0, msMax = 1000) {
     const diff = msMax - msMin;
     let ms = msMin + diff * Math.random(); // Math.random() gives number between 0 and 1
     ms = Math.round(ms);
-    return this.delay(ms);
+    await this.delay(ms);
   }
 
 
@@ -420,7 +413,6 @@ class FunctionFlow {
   delaysRemove() {
     clearTimeout(this.delayID1);
     clearTimeout(this.delayID2);
-    clearTimeout(this.delayID3);
   }
 
 
@@ -440,7 +432,7 @@ class FunctionFlow {
   _delayFunction(msDelay) {
     this.delaysRemove(); // initially remove previous delays
     const promis = new Promise(resolve => {
-      this.delayID2 = setTimeout(resolve, msDelay); // keep promis in 'pending' state until setTimeout is not finished
+      this.delayID1 = setTimeout(resolve, msDelay); // keep promis in 'pending' state until setTimeout is not finished
     });
 
     return promis;
@@ -463,7 +455,7 @@ class FunctionFlow {
       }
 
       // keep promis in 'pending' state until setTimeout is not finished
-      this.delayID3 = setTimeout(resolve, 3 * 24 * 60 * 60 * 1000); // delay of 3 days
+      this.delayID2 = setTimeout(resolve, 3 * 24 * 60 * 60 * 1000); // delay of 3 days
     });
 
     return promis;
