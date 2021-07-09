@@ -10,7 +10,9 @@ console.log('asked url:: GET', url);
 
 const getJSON = async() => {
   const opts = {
+    debug: false,
     encodeURI: false,
+    encoding: 'utf8',
     timeout: 3000,
     retry: 1,
     retryDelay: 1300,

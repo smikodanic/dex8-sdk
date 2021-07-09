@@ -54,7 +54,7 @@ class RuntimeCommands {
       } else if (line === 'x') {
         console.log(':show x');
         this._showX();
-      } else if (/^x\./.test(line)) {
+      } else if (/^x.*\=/.test(line)) {
         console.log(':set x field');
         this._setupXfield(line);
 
@@ -176,38 +176,65 @@ class RuntimeCommands {
 
   /**
    * Setup "x.field" value.
-   * For example: x.a = ' some string ' or x.a = " some string"
+   * For example: x.product.name = ' Red car ' or x.product.name = " Red car"
    */
   _setupXfield(line) {
     try {
       const matched = line.match(/(.*)\s*=\s*(.*)/);
 
-      // get field
-      let field = matched[1].trim();
-      field = field.replace(/^x\./, ''); // remove x.
+      // get property name
+      const prop = matched[1].trim(); // x.product.name
 
       // get value
-      let val = matched[2].trim();
-      val = val.replace('^\'', '').replace('\'$', ''); // remove single quote '
-      val = val.replace('^\"', '').replace('\"$', ''); // remove double quote "
+      let val = matched[2].trim(); // ' Red car '
+      val = val.replace(/^\'/, '').replace(/\'$/, ''); // remove single quote '
+      val = val.replace(/^\"/, '').replace(/\"$/, ''); // remove double quote "
+      val = this._typeConvertor(val);
 
-      // eval number, string, boolean or object
-      if (/^{/.test(val)) {
-        try {
-          val = JSON.parse(val);
-        } catch (err) {
-          throw new Error('Enter valid JSON (use double quotes ")!');
+      const propSplitted = prop.split('.'); // ['x', 'product', 'name']
+      let i = 1;
+      let obj = this.ff;
+      for (const prop of propSplitted) {
+        if (i !== propSplitted.length) { // not last property
+          obj[prop] = {};
+          obj = obj[prop];
+        } else { // on last property associate the value
+          obj[prop] = val;
         }
-      } else {
-        val = eval(val);
+        i++;
       }
 
-      this.ff.x[field] = val;
-      console.log(`new value:: x.${field} = ${val}`);
+      console.log(`new value:: ${prop} = ${val}`);
 
     } catch (err) {
       console.log(chalk.red(err.stack));
     }
+  }
+
+
+  /**
+   * Convert string into integer, float or boolean.
+   * @param {string} value
+   * @returns {string | number | boolean | object}
+   */
+  _typeConvertor(value) {
+    function isJSON(str) {
+      try { JSON.parse(str); }
+      catch(err) { return false; }
+      return true;
+    }
+
+    if (!!value && !isNaN(value) && !/\./.test(value)) { // convert string into integer (12)
+      value = parseInt(value, 10);
+    } else if (!!value && !isNaN(value) && /\./.test(value)) { // convert string into float (12.35)
+      value = parseFloat(value);
+    } else if (value === 'true' || value === 'false') { // convert string into boolean (true)
+      value = JSON.parse(value);
+    } else if (isJSON(value)) {
+      value = JSON.parse(value);
+    }
+
+    return value;
   }
 
 

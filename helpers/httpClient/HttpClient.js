@@ -23,7 +23,9 @@ class HttpClient {
 
     if (!opts) {
       this.opts = {
+        debug: false, // show debug messages
         encodeURI: false,
+        encoding: 'utf8', // use 'binary' for PDF files, and revert it to buffer with Buffer.from(answer.res.content, 'binary')
         timeout: 8000,
         retry: 3,
         retryDelay: 5500,
@@ -67,14 +69,14 @@ class HttpClient {
     this.queryString = urlObj.search;
 
     // debug
-    /*
-    console.log('this.url:: ', this.url); // http://localhost:8001/www/products?category=databases
-    console.log('this.protocol:: ', this.protocol); // http:
-    console.log('this.hostname:: ', this.hostname); // localhost
-    console.log('this.port:: ', this.port); // 8001
-    console.log('this.pathname:: ', this.pathname); // /www/products
-    console.log('this.queryString:: ', this.queryString); // ?category=databases
-    */
+    if (this.opts.debug) {
+      console.log('this.url:: ', this.url); // http://localhost:8001/www/products?category=databases
+      console.log('this.protocol:: ', this.protocol); // http:
+      console.log('this.hostname:: ', this.hostname); // localhost
+      console.log('this.port:: ', this.port); // 8001
+      console.log('this.pathname:: ', this.pathname); // /www/products
+      console.log('this.queryString:: ', this.queryString); // ?category=databases
+    }
 
     return url;
   }
@@ -103,6 +105,57 @@ class HttpClient {
     }
 
     return url;
+  }
+
+
+  /**
+   * Convert string into integer, float or boolean.
+   * @param {string} value
+   * @returns {string | number | boolean | object}
+   */
+  _typeConvertor(value) {
+    function isJSON(str) {
+      try { JSON.parse(str); }
+      catch(err) { return false; }
+      return true;
+    }
+
+    if (!!value && !isNaN(value) && value.indexOf('.') === -1) { // convert string into integer (12)
+      value = parseInt(value, 10);
+    } else if (!!value && !isNaN(value) && value.indexOf('.') !== -1) { // convert string into float (12.35)
+      value = parseFloat(value);
+    } else if (value === 'true' || value === 'false') { // convert string into boolean (true)
+      value = JSON.parse(value);
+    } else if (isJSON(value)) {
+      value = JSON.parse(value);
+    }
+
+    return value;
+  }
+
+
+
+  /**
+   * Create query object from query string.
+   * @param  {string} queryString - x=abc&y=123&z=true
+   * @return {object}             - {x: 'abc', y: 123, z: true}
+   */
+  _toQueryObject(queryString) {
+    const queryArr = queryString.replace(/^\?/, '').split('&');
+    const queryObject = {};
+
+    let eqParts, property, value;
+    queryArr.forEach(elem => {
+      eqParts = elem.split('='); // equotion parts
+      property = eqParts[0];
+      value = eqParts[1];
+
+      value = this._typeConvertor(value); // t y p e   c o n v e r s i o n
+
+      queryObject[property] = value;
+    });
+
+    return queryObject;
   }
 
 
@@ -233,6 +286,7 @@ class HttpClient {
       // remoteAddress: // TODO
       // referrerPolicy: // TODO
       req: {
+        query: {},
         headers: this.headers,
         payload: undefined
       },
@@ -253,6 +307,7 @@ class HttpClient {
       url = this._parseUrl(url);
       answer.requestURL = url;
       answer.https = /^https/.test(this.protocol);
+      answer.req.query = this._toQueryObject(this.queryString); // from ?a=sasa&b=2 => {a:'sasa', b:2}
     } catch (err) {
       // if URL is not properly defined
       const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
@@ -296,7 +351,6 @@ class HttpClient {
 
       /*** 3.A) successful response ***/
       clientRequest.on('response', res => {
-
         // collect raw data e.g. buffer data
         const buf_chunks = [];
         res.on('data', (buf_chunk) => {
@@ -320,8 +374,8 @@ class HttpClient {
             gzip = true;
           }
 
-          // convert binary (buffer) to string
-          let content = gunziped.toString();
+          // convert buffer to string
+          let content = gunziped.toString(this.opts.encoding);
 
           // convert string to object if content is in JSON format
           let contentObj;
@@ -480,6 +534,7 @@ class HttpClient {
     });
 
     const answer = await this.askOnce(url, method, body_obj);
+    console.log(JSON.stringify(answer.res.content, null, 4));
 
     // convert content string to object
     if (!!answer.res.content) {

@@ -53,17 +53,13 @@ class FunctionFlow {
 
 
 
-  /*============================== INPUT - this.x ==============================*/
+  /*============================== X - this.x ==============================*/
   /**
-   * Inject input into function first parameter - func(x, lib)
+   * Inject x (transitioanl variable) into function first parameter - func(x, lib)
    * @param {Object} x - injected input - {a: 8, b: 'Something ...'}
    */
-  xInject(input) {
-    if (input) {
-      this.x = input;
-    } else {
-      throw new Error('Input is injected in FunctionFlow but it is not defined.');
-    }
+  xInject(x) {
+    this.x = x;
   }
 
   /**
@@ -75,7 +71,7 @@ class FunctionFlow {
 
 
 
-  /*============================== LIBRARY - this.lib ==============================*/
+  /*============================== LIB - this.lib ==============================*/
   /**
    * Inject libraries like Bluebird promises, Cheerio, Puppeteer, ...etc. into function second parameter - func(x, lib)
    * @param {Object} lib - injected library - {BPromis, puppeteer, cheerio}

@@ -18,7 +18,9 @@ console.log('asked url:: GET', url);
 const getUrl = async() => {
 
   const opts = {
+    debug: false,
     encodeURI: false,
+    encoding: 'utf8',
     timeout: 3000,
     retry: 2,
     retryDelay: 2100,
