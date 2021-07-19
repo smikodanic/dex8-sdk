@@ -381,10 +381,8 @@ class HttpClient {
           let contentObj;
           try {
             contentObj = JSON.parse(content);
-            if (!!contentObj) {
-              content = contentObj;
-            }
-          } catch(err) {}
+            if (!!contentObj) { content = contentObj; }
+          } catch(err) { }
 
 
 
@@ -399,11 +397,9 @@ class HttpClient {
           ans.time.res = this._getTime();
           ans.time.duration = this._getTimeDiff(ans.time.req, ans.time.res);
 
-
           resolve(ans);
 
           this._killAgent(agent);
-
         });
 
       });
@@ -534,19 +530,7 @@ class HttpClient {
     });
 
     const answer = await this.askOnce(url, method, body_obj);
-    console.log(JSON.stringify(answer.res.content, null, 4));
-
-    // convert content string to object
-    if (!!answer.res.content) {
-      try {
-        answer.res.content = JSON.parse(answer.res.content);
-      } catch (err) {
-        throw new Error('Response content is not valid JSON.');
-      }
-    }
-
     return answer;
-
   }
 
 
