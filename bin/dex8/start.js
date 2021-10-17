@@ -64,7 +64,7 @@ module.exports = async (optionsObj) => {
   /**** 5) GET main & input ****/
   const mainPath = path.join(process.cwd(), 'main.js');
   const mainExists = await fse.pathExists(mainPath);
-  if (!mainExists) { console.log(dex8sdk.chalk.red(`Task "${task_title}" does not have "main.js" file.`)); return;}
+  if (!mainExists) { console.log(dex8sdk.chalk.red(`Task "${task_title}" does not have "main.js" file.`)); return; }
   // delete require.cache[mainPath];
   const main = require(mainPath);
 
@@ -72,7 +72,7 @@ module.exports = async (optionsObj) => {
   if (!!input_selected) {
     const input_selectedPath = path.join(process.cwd(), input_selected);
     const inputExists = await fse.pathExists(input_selectedPath);
-    if (!inputExists) { console.log(dex8sdk.chalk.red(`Input file does not exists: ${input_selected}`)); return;}
+    if (!inputExists) { console.log(dex8sdk.chalk.red(`Input file does not exists: ${input_selected}`)); return; }
     // delete require.cache[input_selectedPath];
     input = require(input_selectedPath);
   }
@@ -87,11 +87,12 @@ module.exports = async (optionsObj) => {
 
   /**** 7) EXECUTE main ****/
   try {
-    const lib = {...dex8sdk, ff, echo, mongo};
+    const lib = { ...dex8sdk, ff, echo, mongo };
     const output = await main(input, lib);
     echo.log('output:: ', output);
     echo.log(`Task "${task_title}" is ended on ${shortNow()}`);
   } catch (err) {
+    console.log(err);
     echo.error(err);
     await ff.delay(1300);
     echo.error(new Error(`Task "${task_title}" exited with error on ${shortNow()}`));

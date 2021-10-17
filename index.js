@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 
 const CSV = require('./helpers/CSV/CSV');
 const Echo = require('./helpers/echo/Echo');
-const FunctionFlow = require('./helpers/functionflow/FunctionFlow_v2.1');
+const FunctionFlow = require('./helpers/functionflow/FunctionFlow_v2.2');
 const HttpClient = require('./helpers/httpClient/HttpClient');
 const Mongo = require('./helpers/mongo/Mongo');
 const Rand = require('./helpers/rand/Rand');
