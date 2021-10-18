@@ -60,7 +60,7 @@ class HttpClient {
    */
   _parseUrl(url) {
     url = this._correctUrl(url);
-    const urlObj  = new url_node.URL(url);
+    const urlObj = new url_node.URL(url);
     this.url = url;
     this.protocol = urlObj.protocol;
     this.hostname = urlObj.hostname;
@@ -86,7 +86,7 @@ class HttpClient {
    * URL corrections
    */
   _correctUrl(url) {
-    if (!url) {throw new Error('URL is not defined'); }
+    if (!url) { throw new Error('URL is not defined'); }
 
     // 1. trim from left and right
     url = url.trim();
@@ -116,7 +116,7 @@ class HttpClient {
   _typeConvertor(value) {
     function isJSON(str) {
       try { JSON.parse(str); }
-      catch(err) { return false; }
+      catch (err) { return false; }
       return true;
     }
 
@@ -310,7 +310,7 @@ class HttpClient {
       answer.req.query = this._toQueryObject(this.queryString); // from ?a=sasa&b=2 => {a:'sasa', b:2}
     } catch (err) {
       // if URL is not properly defined
-      const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
+      const ans = { ...answer }; // clone object to prevent overwrite of object properies once promise is resolved
       ans.status = 400; // client error - Bad Request
       ans.statusMessage = err.message || 'Bad Request';
       ans.time.res = this._getTime();
@@ -347,7 +347,7 @@ class HttpClient {
     }
 
 
-    const promise = new Promise ((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
 
       /*** 3.A) successful response ***/
       clientRequest.on('response', res => {
@@ -382,12 +382,12 @@ class HttpClient {
           try {
             contentObj = JSON.parse(content);
             if (!!contentObj) { content = contentObj; }
-          } catch(err) { }
+          } catch (err) { }
 
 
 
           // format answer
-          const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
+          const ans = { ...answer }; // clone object to prevent overwrite of object properies once promise is resolved
           ans.status = res.statusCode; // 2xx -ok response, 4xx -client error (bad request), 5xx -server error
           ans.statusMessage = res.statusMessage;
           ans.httpVersion = res.httpVersion;
@@ -411,7 +411,7 @@ class HttpClient {
         this._killAgent(agent);
 
         // format answer
-        const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
+        const ans = { ...answer }; // clone object to prevent overwrite of object properies once promise is resolved
         ans.status = 408; // 408 - timeout
         ans.statusMessage = `Request aborted due to timeout (${this.opts.timeout} ms) ${url} `;
         ans.time.res = this._getTime();
@@ -427,7 +427,7 @@ class HttpClient {
         const err = this._formatError(error, url);
 
         // format answer
-        const ans = {...answer}; // clone object to prevent overwrite of object properies once promise is resolved
+        const ans = { ...answer }; // clone object to prevent overwrite of object properies once promise is resolved
         ans.status = err.status;
         ans.statusMessage = err.message;
         ans.time.res = this._getTime();
@@ -554,12 +554,12 @@ class HttpClient {
    * @param {String} headerValue - 'text/html; charset=UTF-8'
    */
   setHeader(headerName, headerValue) {
-    const headerObj = {[headerName]: headerValue};
+    const headerObj = { [headerName]: headerValue };
     this.headers = Object.assign(this.headers, headerObj);
   }
 
   /**
-   * Change header object.
+   * Delete header object.
    * @param {Array} headerNames - array of header names    ['content-type', 'accept']
    */
   delHeaders(headerNames) {
