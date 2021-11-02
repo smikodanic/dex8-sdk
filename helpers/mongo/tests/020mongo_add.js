@@ -7,8 +7,7 @@ const mongo = new Mongo(user_id, robot_id, task_id);
 
 
 // establish connection
-const mo_uri = 'mongodb://dex8_freeuser:freedom5@5.189.161.70:27017/dex8-dev-pool-free01';
-// const mo_uri = 'mongodb+srv://dex8_freeuser:12345@cluster0-n4qix.mongodb.net/dex8-dev-pool-free01?retryWrites=true&w=majority'; // test cloud.mongodb.com
+const mo_uri = 'mongodb://dex8_freeuser:freedom5@5.189.161.70:27017/dex8-freepool01';
 mongo.connect(mo_uri);
 
 

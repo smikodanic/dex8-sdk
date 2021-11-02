@@ -7,7 +7,7 @@ const mongo = new Mongo(user_id, robot_id, task_id);
 
 
 // establish connection
-const mo_uri = 'mongodb://dex8_freeuser:freedom5@5.189.161.70:27017/dex8-dev-pool-free01';
+const mo_uri = 'mongodb://dex8_freeuser:freedom5@5.189.161.70:27017/dex8-freepool01';
 mongo.connect(mo_uri);
 
 
@@ -17,10 +17,10 @@ mongo.useModel('mongo-test');
 
 
 const moQuery = {};
-const limit = 2;
+const limit = 20;
 const skip = 0;
 const sort = '-updated_at';
-const select = 'url created_at updated_at';
+const select = 'url depth created_at updated_at';
 
 mongo.list(moQuery, limit, skip, sort, select)
   .then(resp => {

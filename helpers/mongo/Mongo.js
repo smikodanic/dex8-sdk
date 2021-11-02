@@ -158,6 +158,7 @@ class Mongo {
       // console.log(compiledModel.collection.collectionName, collectionName, ' =>', tf);
       return tf;
     });
+    if (!this.model) { throw new Error(`Model not found for "${collectionName}" collection.`); }
   }
 
 
