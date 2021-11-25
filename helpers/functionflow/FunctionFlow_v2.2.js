@@ -159,7 +159,6 @@ class FunctionFlow {
    * @param {Array} arr - array
    */
   async serialEach(funcs, arr) {
-    this.lastExecuted = { method: this.serialEach.name, args: Array.from(arguments) };
     for (const elem of arr) {
       this.lib.serialEachElement = elem;
       await this._serialExe(funcs, this.serialEach.name);
@@ -178,7 +177,6 @@ class FunctionFlow {
    * @param {Number} n - how many times to repet the serial
    */
   async serialRepeat(funcs, n) {
-    this.lastExecuted = { method: this.serialRepeat.name, args: Array.from(arguments) };
     for (let i = 1; i <= n; i++) {
       this.lib.serialRepeatIteration = i;
       await this._serialExe(funcs, this.serialRepeat.name);
