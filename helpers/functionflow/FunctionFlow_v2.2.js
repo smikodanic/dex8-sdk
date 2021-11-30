@@ -159,9 +159,12 @@ class FunctionFlow {
    * @param {Array} arr - array
    */
   async serialEach(funcs, arr) {
+    let key = 0;
     for (const elem of arr) {
       this.lib.serialEachElement = elem;
+      this.lib.serialEachKey = key;
       await this._serialExe(funcs, this.serialEach.name);
+      key++;
     }
     delete this.lib.serialEachElement;
     return this.x;
