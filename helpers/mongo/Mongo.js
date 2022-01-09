@@ -5,20 +5,7 @@ const genericSchema = require('./schema/Generic');
 
 class Mongo {
 
-
-  /**
-   * Construct object
-   * @param {String} user_id - users._id
-   * @param {String} robot_id - robts._id
-   * @param {String} task_id - tasks._id
-   */
-  constructor(user_id, robot_id, task_id) {
-    this.user_id = user_id;
-    this.robot_id = robot_id;
-    this.task_id = task_id;
-
-    this.ids = {user_id, robot_id, task_id};
-
+  constructor() {
     this.mo_uri;
     this.conn; // NativeConnection
     this.model = null; // currently used model
@@ -28,34 +15,11 @@ class Mongo {
 
 
   /***************** SERVER  *****************/
-  onEvent() {
-    this.conn.on('error', (err) => {
-      console.error(chalk.red(this.mo_uri, err, 'readyState:' + this.conn.readyState));
-    });
-    this.conn.on('connected', () => {
-      console.log(chalk.blue(this.mo_uri, '-connected'));
-    });
-    this.conn.on('open', () => {
-      // console.log(chalk.blue(dbConfig.uri, '-connection open'));
-    });
-    this.conn.on('reconnected', () => {
-      console.log(chalk.blue(this.mo_uri, '-connection reconnected'));
-    });
-    this.conn.on('disconnected', () => {
-      console.log(chalk.blue(this.mo_uri, '-connection disconnected'));
-    });
-    process.on('SIGINT', () => {
-      mongoose.disconnect(() => {
-        console.log(chalk.blue(this.mo_uri, '-disconnected on app termination by SIGINT'));
-        process.exit(0);
-      });
-    });
-  }
-
   /**
-   * Connect to mongodb server.
+   * Connect to mongodb server. Multiple connections are possible.
    * https://mongoosejs.com/docs/connections.html
-   * @param {String} mo_uri - mongodb://user:pass@5.189.161.70:27017/dex8-pool-01
+   * @param {string} mo_uri - mongodb://user:pass@5.189.161.70:27017/dex8-pool-01
+   * @returns {Promise<void>}
    */
   async connect(mo_uri) {
     this.mo_uri = mo_uri;
@@ -69,19 +33,50 @@ class Mongo {
       autoIndex: true,
       bufferCommands: true
     };
-    this.conn = mongoose.createConnection(this.mo_uri, opts);
-    this.onEvent();
-    return this.conn;
+
+    const prom = new Promise((resolve, reject) => {
+      this.conn = mongoose.createConnection(this.mo_uri, opts);
+
+      // MONGO CONNECTION EVENTS
+      this.conn.on('connected', () => {
+        const msg = this.mo_uri + ' -connected';
+        console.log(chalk.blue(msg));
+        resolve(msg);
+      });
+
+      this.conn.on('error', err => {
+        console.error(chalk.red(this.mo_uri, err, 'readyState:' + this.conn.readyState));
+        reject(err);
+      });
+
+      this.conn.on('reconnected', () => {
+        console.log(chalk.blue(this.mo_uri, '-connection reconnected'));
+      });
+
+      this.conn.on('disconnected', () => {
+        console.log(chalk.blue(this.mo_uri, '-connection disconnected'));
+      });
+
+      process.on('SIGINT', () => {
+        mongoose.disconnect(() => {
+          console.log(chalk.blue(this.mo_uri, '-disconnected on app termination by SIGINT'));
+          process.exit(0);
+        });
+      });
+
+    });
+
   }
 
 
   /**
    * Disconnect from mongodb server.
+   * @returns {Promise<void>}
    */
-  disconnect() {
+  async disconnect() {
+    await new Promise(r => setTimeout(r, 1300));
     this.conn.close();
   }
-
 
 
 
@@ -89,6 +84,7 @@ class Mongo {
   /***************** DATABASE  *****************/
   /**
    * Delete database
+   * @returns {Promise<boolean>}
    */
   deleteDatabase() {
     return this.conn.db.dropDatabase();
@@ -99,6 +95,7 @@ class Mongo {
   /***************** COLLECTIONS  *****************/
   /**
    * List database collections
+   * @returns {Promise<Array>}
    */
   showCollections() {
     return this.conn.db.listCollections().toArray();
@@ -107,10 +104,11 @@ class Mongo {
 
   /**
    * Delete database collections
-   * @param {*} collectionName - collection name
+   * @param {string} collectionName - collection name
+   * @returns {Promise<boolen>}
    */
   deleteCollection(collectionName) {
-    return this.conn.collections[collectionName].drop();
+    return this.conn.db.dropCollection(collectionName);
   }
 
 
@@ -118,8 +116,9 @@ class Mongo {
 
   /***************** DOCUMENTS  *****************/
   /**
-   * Create mongoose model.
-   * @param {Object | String} moSchema - mongoose.Schema or collectionName
+   * Create mongoose model and push it in the "this.compiledModels" array.
+   * @param {Object|string} moSchema - mongoose.Schema or collectionName
+   * @returns {Promise<void>}
    */
   async compileModel(moSchema) {
 
@@ -130,8 +129,7 @@ class Mongo {
       // use genericSchema shema if other schema is not defined
       collectionName = genericSchema.options.collection;
       sch = genericSchema;
-    }
-    else if (typeof moSchema === 'string') { // when collectionName is used instead of mongoose Schema (to be compatible with old method)
+    } else if (typeof moSchema === 'string') { // when collectionName is used instead of mongoose Schema (to be compatible with old method)
       collectionName = moSchema;
       genericSchema.options.collection = collectionName;
       sch = genericSchema;
@@ -142,6 +140,8 @@ class Mongo {
 
     //// compile model and push to compiledModels
     this.model = this.conn.model(`${collectionName}MD`, sch); // if mongoose.createConnection() is used
+    // console.dir(this.model.collection, { depth: 2 });
+
     this.compiledModels.push(this.model);
     await new Promise(resolve => setTimeout(resolve, 100)); // small delay
   }
@@ -150,12 +150,13 @@ class Mongo {
   /**
    * Use mongoose model according to the selected collection name.
    * Define current model for methods: add, save, list, getOne, deleteOne, deleteMany, ...
-   * @param {String} collectionName - mongodb collection name
+   * @param {string} collectionName - mongodb collection name
+   * @returns {void}
    */
   useModel(collectionName) {
     this.model = this.compiledModels.find(compiledModel => {
       const tf = compiledModel.collection.collectionName === collectionName;
-      // console.log(compiledModel.collection.collectionName, collectionName, ' =>', tf);
+      // console.log(compiledModel.collection.collectionName, '===' ,collectionName, ' =>', tf);
       return tf;
     });
     if (!this.model) { throw new Error(`Model not found for "${collectionName}" collection.`); }
@@ -165,6 +166,7 @@ class Mongo {
   /**
    * Save doc to collection.
    * @param {Object} doc - mongoose doc (object)
+   * @returns {Promise<Object>}
    */
   save(doc) {
     const docObj = new this.model(doc);
@@ -174,7 +176,8 @@ class Mongo {
 
   /**
    * Add doc to collection.
-   * @param {Object | Array} doc - object or array of objects
+   * @param {Object|Array} doc - object or array of objects
+   * @returns {Promise<Object>}
    */
   add(doc) {
     return this.model.create(doc);
@@ -186,6 +189,7 @@ class Mongo {
    * Bulk insertion.
    * @param {Array} docs - array of objects
    * @param {Object} insOpts - https://mongoosejs.com/docs/api/model.html#model_Model.insertMany
+   * @returns {Promise<Object>}
    */
   insertMulti(docs, insOpts) {
     if (!insOpts) {
@@ -207,6 +211,7 @@ class Mongo {
    * @param {Number} skip
    * @param {String} sort
    * @param {String} select
+   * @returns {Promise<Object>}
    */
   list(moQuery, limit, skip, sort, select) {
     return this.model
@@ -238,6 +243,7 @@ class Mongo {
    * @param {Number} skip
    * @param {String} sort
    * @param {String} select
+   * @returns {Promise<Object>}
    */
   listFast(moQuery, limit, skip, sort, select) {
     return this.model
@@ -255,6 +261,7 @@ class Mongo {
    * @param {Object} moQuery - mongo query
    * @param {String} sort
    * @param {String} select
+   * @returns {Promise<Object>}
    */
   getOne(moQuery, sort, select) {
     return this.model
@@ -268,6 +275,7 @@ class Mongo {
   /**
    * Delete a doc.
    * @param {Object} moQuery - mongo query
+   * @returns {Promise<Object>}
    */
   deleteOne(moQuery) {
     return this.model.findOneAndDelete(moQuery);
@@ -277,6 +285,7 @@ class Mongo {
   /**
    * Delete docs.
    * @param {Object} moQuery - mongo query
+   * @returns {Promise<Object>}
    */
   deleteMulti(moQuery) {
     return this.model.deleteMany(moQuery);
@@ -288,6 +297,7 @@ class Mongo {
    * @param {Object} moQuery - mongo query
    * @param {Object} docNew - new, updated document
    * @param {Object} updOpts - https://mongoosejs.com/docs/api/model.html#model_Model.findOneAndUpdate
+   * @returns {Promise<Object>}
    */
   editOne(moQuery, docNew, updOpts) {
     if (!updOpts) {
@@ -308,6 +318,7 @@ class Mongo {
   /**
    * Count docs by the mongo query.
    * @param {Object} moQuery - mongo query
+   * @returns {Promise<number>}
    */
   countDocs(moQuery) {
     return this.model.countDocuments(moQuery);

@@ -30,8 +30,8 @@
   "main": "index.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "inst": "sudo rm -rf node_modules && export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false && npm install",
-    "inst-chromium": "sudo rm -rf node_modules && npm install"
+    "inst": "rm -rf node_modules && export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false && npm install",
+    "inst-chromium": "rm -rf node_modules && npm install"
   },
   "bin": {
     "dex8": "./bin/dex8/index.js"

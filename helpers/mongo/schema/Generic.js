@@ -2,7 +2,6 @@
  * General schema.
  * Used when no other schema is defined.
  */
-
 const Schema = require('mongoose').Schema;
 
 const collection = 'generic';
