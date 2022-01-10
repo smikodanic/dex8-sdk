@@ -2,7 +2,8 @@
 	"globals": {
 		"jQuery": false,
     "$": false,
-		"AsyncFunction": true
+		"AsyncFunction": true,
+    "document": true
 	},
 	"env": {
 		"browser": false,
