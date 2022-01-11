@@ -1,5 +1,5 @@
-const FunctionFlow = require('../index.js').v2_0;
-const ff = new FunctionFlow({debug: true, msDelay: 5500});
+const FunctionFlow = require('../../../helpers/functionflow/FunctionFlow_v2.2');
+const ff = new FunctionFlow({ debug: true, msDelay: 5500 });
 
 // functions
 const f1 = (x, lib) => {
@@ -36,7 +36,7 @@ const main = async (input, lib) => {
     const y = await ff.one(f3);
     return y; // or return ff.x;
 
-  } catch(err) {
+  } catch (err) {
     throw err;
   }
 };
@@ -44,7 +44,7 @@ const main = async (input, lib) => {
 
 
 const inp = 5;
-const lib = {ff};
+const lib = { ff };
 
 main(inp, lib)
   .then(res => console.log('RES:: ', res))

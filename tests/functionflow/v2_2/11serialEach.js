@@ -1,25 +1,25 @@
-const { FunctionFlow } = require('../../index.js');
+const FunctionFlow = require('../../../helpers/functionflow/FunctionFlow_v2.2');
 const ff = new FunctionFlow({ debug: true, msDelay: 800 });
 
 // functions
 const f1 = (x, lib) => {
   x++;
   console.log('f1-return', x);
-  console.log('lib.serialRepeatIteration::', lib.serialRepeatIteration);
+  console.log('lib.serialEachElement::', lib.serialEachElement);
   return x;
 };
 
 const f2 = (x, lib) => {
   x++;
   console.log('f2-return', x);
-  console.log('lib.serialRepeatIteration::', lib.serialRepeatIteration);
+  console.log('lib.serialEachElement::', lib.serialEachElement);
   return x;
 };
 
 const f3 = (x, lib) => {
   x++;
   console.log('f3-return', x);
-  console.log('lib.serialRepeatIteration::', lib.serialRepeatIteration);
+  console.log('lib.serialEachElement::', lib.serialEachElement);
   return x;
 };
 
@@ -35,9 +35,9 @@ const main = async (input, library) => {
     ff.xInject(input);
     ff.libInject(library);
 
-    const n = 3;
+    const arr = ['Joe', 'Ann', 'Mary'];
 
-    const y = await ff.serialRepeat([f1, f2, f3, f1], n);
+    const y = await ff.serialEach([f1, f2, f3, f1], arr);
     await ff.delay(3400);
 
     console.log(ff.lib); // serialEachElement should be deleted

@@ -1,23 +1,48 @@
-const { FunctionFlow } = require('../../index.js');
-const ff = new FunctionFlow({ debug: true, msDelay: 800 });
+const FunctionFlow = require('../../../helpers/functionflow/FunctionFlow_v2.2');
+const ff = new FunctionFlow({ debug: true, msDelay: 400 });
 
 // functions
+const f0 = (x, lib) => {
+  x++;
+  console.log('f0:: ', x);
+  return x;
+};
+
 const f1 = (x, lib) => {
   x++;
-  console.log('f1-return', x);
+  console.log('f1:: ', x);
   return x;
 };
 
 const f2 = (x, lib) => {
   x++;
-  console.log('f2-return', x);
+  console.log('f2:: ', x);
+  if (x < 13) { lib.ff.go(1); } // go back to f1
   return x;
 };
 
 const f3 = (x, lib) => {
   x++;
-  console.log('f3-return', x);
-  console.log(lib.ff.lib);
+  console.log('f3:: ', x);
+  return x;
+};
+
+const f4 = (x, lib) => {
+  x++;
+  console.log('f4:: ', x);
+  lib.ff.go(6); // go to f6 e.g. jump over f5
+  return x;
+};
+
+const f5 = (x, lib) => {
+  x++;
+  console.log('f5:: ', x);
+  return x;
+};
+
+const f6 = (x, lib) => {
+  x++;
+  console.log('f6:: ', x);
   return x;
 };
 
@@ -26,16 +51,14 @@ const f3 = (x, lib) => {
 
 
 
-const main = async (input, library) => {
-  const ff = library.ff;
+const main = async (input, lib) => {
+  const ff = lib.ff;
 
   try {
     ff.xInject(input);
-    ff.libInject(library);
+    ff.libInject(lib);
 
-    const y = await ff.serial([f1, f2, f3, f1]);
-    await ff.delay(3400);
-
+    const y = await ff.serial([f0, f1, f2, f3, f4, f5, f6]);
     return y; // or return ff.x;
 
   } catch (err) {
@@ -46,11 +69,11 @@ const main = async (input, library) => {
 
 
 const inp = 5;
-const library = { ff };
+const lib = { ff };
 
-main(inp, library)
-  .then(res => console.log('RES:: ', res))
-  .catch(err => console.error('ERR:: ', err));
+main(inp, lib)
+  .then(res => console.log('\n\nRES:: ', res))
+  .catch(err => console.error('\n\nERR:: ', err));
 
 
 

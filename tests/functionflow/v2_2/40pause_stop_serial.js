@@ -1,15 +1,15 @@
-const FunctionFlow = require('../index.js').v2_0;
-const ff = new FunctionFlow({debug: true, msDelay: 3400});
+const FunctionFlow = require('../../../helpers/functionflow/FunctionFlow_v2.2');
+const ff = new FunctionFlow({ debug: true, msDelay: 1000 });
 
 // functions
 const f1 = (x, lib) => {
   console.log('f1', x);
-  return new Promise(resolve => setTimeout(() => {resolve(x + 2);}, 1000));
+  return x + 1;
 };
 
 const f2 = (x, lib) => {
   console.log('f2', x);
-  return new Promise(resolve => setTimeout(() => {resolve(x * 3);}, 3000));
+  return x + 1;
 };
 
 const f3 = (x, lib) => {
@@ -28,11 +28,26 @@ const main = async (input, lib) => {
     ff.xInject(input);
     ff.libInject(lib);
 
-    // parallelRAce will send output of f3 because it's the fastest function
-    const y = await ff.parallelRace([f1, f2, f3]);
+    // PAUSE
+    setTimeout(() => {
+      ff.pause();
+    }, 2000);
+
+    // reSTART
+    setTimeout(() => {
+      ff.start();
+    }, 5000);
+
+    // STOP
+    setTimeout(() => {
+      ff.stop();
+    }, 8000);
+
+    const y = await ff.serial([f1, f2, f3, f1, f2, f3, f1, f2, f3]);
+
     return y; // or return ff.x;
 
-  } catch(err) {
+  } catch (err) {
     throw err;
   }
 };
@@ -42,7 +57,7 @@ const main = async (input, lib) => {
 
 
 const inp = 5;
-const lib = {ff};
+const lib = { ff };
 
 main(inp, lib)
   .then(res => console.log('RES:: ', res))

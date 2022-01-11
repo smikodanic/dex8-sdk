@@ -1,15 +1,15 @@
-const FunctionFlow = require('../index.js').v2_0;
-const ff = new FunctionFlow({debug: true, msDelay: 400});
+const FunctionFlow = require('../../../helpers/functionflow/FunctionFlow_v2.2');
+const ff = new FunctionFlow({ debug: true, msDelay: 400 });
 
 // functions
 const f1 = (x, lib) => {
   console.log('f1', x);
-  return new Promise(resolve => setTimeout(() => {resolve(x + 2);}, 1000));
+  return new Promise(resolve => setTimeout(() => { resolve(x + 2); }, 1000));
 };
 
 const f2 = (x, lib) => {
   console.log('f2', x);
-  return new Promise(resolve => setTimeout(() => {resolve(x * 3);}, 3000));
+  return new Promise(resolve => setTimeout(() => { resolve(x * 3); }, 3000));
 };
 
 const f3 = (x, lib) => {
@@ -36,7 +36,7 @@ const main = async (input, lib) => {
 
     return y; // or return ff.x;
 
-  } catch(err) {
+  } catch (err) {
     throw err;
   }
 };
@@ -46,7 +46,7 @@ const main = async (input, lib) => {
 
 
 const inp = 5;
-const lib = {ff};
+const lib = { ff };
 
 main(inp, lib)
   .then(res => console.log('RES:: ', res))

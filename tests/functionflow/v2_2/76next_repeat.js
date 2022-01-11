@@ -1,5 +1,5 @@
-const FunctionFlow = require('../index.js').v2_0;
-const ff = new FunctionFlow({debug: true, msDelay: 400});
+const FunctionFlow = require('../../../helpers/functionflow/FunctionFlow_v2.2');
+const ff = new FunctionFlow({ debug: true, msDelay: 400 });
 
 // functions
 const f1 = (x, lib) => {
@@ -10,7 +10,7 @@ const f1 = (x, lib) => {
 const f2 = (x, lib) => {
   const ff = lib.ff;
   console.log('f2', x);
-  ff.next();
+  ff.next(10);
   return x + 1;
 };
 
@@ -31,12 +31,11 @@ const main = async (input, lib) => {
     ff.libInject(lib);
 
     await ff.serial([f1, f2, f3]);
-    await ff.serial([f1, f2, f3]);
-    const y = await ff.serial([f1, f2, f3]);
+    const y = await ff.repeat(2);
 
     return y; // or return ff.x;
 
-  } catch(err) {
+  } catch (err) {
     throw err;
   }
 };
@@ -46,7 +45,7 @@ const main = async (input, lib) => {
 
 
 const inp = 5;
-const lib = {ff};
+const lib = { ff };
 
 main(inp, lib)
   .then(res => console.log('RES:: ', res))
@@ -65,6 +64,9 @@ f2 6
    === next  ===
 
 
+
+-------------- 1. repeat/serial --------------
+
 --- serial --- start --- [0] f1 (400 ms) --- x:: 7
 f1 7
 
@@ -73,6 +75,9 @@ f2 8
 
    === next  ===
 
+
+
+-------------- 2. repeat/serial --------------
 
 --- serial --- start --- [0] f1 (400 ms) --- x:: 9
 f1 9
@@ -83,5 +88,6 @@ f2 10
    === next  ===
 
 RES::  11
+
 
 */
