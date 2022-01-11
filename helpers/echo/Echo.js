@@ -20,15 +20,7 @@ const inquirer = require('inquirer');
 class Echo {
 
   constructor(user_id, robot_id, task_id, wsClient) {
-    this.user_id = user_id;
-    this.robot_id = robot_id;
-    this.task_id = task_id;
-    this.wsClient = wsClient;
-
-    // short console log -> string message instead of whole object in __console_log() method
-    this.short = false;
-
-    // initialize message object
+    // initialize the websocket message object
     this.msgObj = {
       user_id,
       robot_id,
@@ -37,6 +29,12 @@ class Echo {
       echo_msg: '',
       time: ''
     };
+
+    // websocket client
+    this.wsClient = wsClient;
+
+    // short console log -> string message instead of whole object in __console_log() method
+    this.short = false;
   }
 
 
@@ -135,9 +133,9 @@ class Echo {
       });
     } else { // listen input from the Linux Console
       const questions = [
-        {type: 'input', name: 'inp', message: 'input:', default: ''}
+        { type: 'input', name: 'inp', message: 'input:', default: '' }
       ];
-      const answers =  await inquirer.prompt(questions);
+      const answers = await inquirer.prompt(questions);
       return answers.inp;
     }
   }
@@ -163,7 +161,7 @@ class Echo {
 
     const time = moment().toISOString();
 
-    this.msgObj = Object.assign(this.msgObj, {echo_method, echo_msg, time}); // {user_id, robot_id, task_id, echo_method, echo_message, time}
+    this.msgObj = Object.assign(this.msgObj, { echo_method, echo_msg, time }); // {user_id, robot_id, task_id, echo_method, echo_message, time}
   }
 
 
