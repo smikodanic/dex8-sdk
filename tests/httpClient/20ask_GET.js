@@ -9,13 +9,13 @@
  */
 
 const util = require('util');
-const HttpClient = require('../HttpClient');
+const HttpClient = require('../../helpers/httpClient/HttpClient');
 const url = process.argv[2];
 
 console.log('asked url:: GET', url);
 
 
-const getUrl = async() => {
+const getUrl = async () => {
 
   const opts = {
     debug: false,

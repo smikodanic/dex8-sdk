@@ -3,12 +3,12 @@
  * $ node 30askJSON_GET.js https://jsonplaceholder.typicode.com/posts/1
  */
 const util = require('util');
-const HttpClient = require('../HttpClient');
+const HttpClient = require('../../helpers/httpClient/HttpClient');
 const url = process.argv[2];
 console.log('asked url:: GET', url);
 
 
-const getJSON = async() => {
+const getJSON = async () => {
   const opts = {
     debug: false,
     encodeURI: false,

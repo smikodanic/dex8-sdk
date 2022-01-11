@@ -1,8 +1,9 @@
 /**
  * $ node 01paresUrl.js <url>
+ * $ node 01parseUrl.js http://aduu.com?x=22
  */
 
-const HttpClient = require('../HttpClient');
+const HttpClient = require('../../helpers/httpClient/HttpClient');
 const url = process.argv[2];
 
 console.log('url:: ', url);

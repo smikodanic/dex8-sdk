@@ -1,6 +1,4 @@
-const RobotsTxt = require('../RobotsTxt');
-
-
+const RobotsTxt = require('../../helpers/robotsTxt/RobotsTxt');
 const robotsTxt = new RobotsTxt('http://www.ugla.com?id=45');
 
 const base_url = robotsTxt.base_url;

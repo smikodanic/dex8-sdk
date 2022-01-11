@@ -4,13 +4,13 @@
  * Example shows how to proceed body as a string in JSON format.
  */
 const chalk = require('chalk');
-const HttpClient = require('../HttpClient');
+const HttpClient = require('../../helpers/httpClient/HttpClient');
 const url = process.argv[2];
 const body_str = process.argv[3]; // this is String
 console.log('asked url:: POST', url);
 
 
-const getJSON = async() => {
+const getJSON = async () => {
   const opts = {
     debug: false,
     encodeURI: false,

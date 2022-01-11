@@ -1,4 +1,4 @@
-const Rand = require('./Rand');
+const Rand = require('../../helpers/rand/Rand');
 const rand = new Rand();
 
 for (let i = 1; i <= 100; i++) {

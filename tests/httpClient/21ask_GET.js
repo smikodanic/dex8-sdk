@@ -1,14 +1,14 @@
 /**
- * $ node 01ask_GET.js <url>
+ * $ node 21ask_GET.js <url>
  */
 const util = require('util');
-const { HttpClient } = require('../../index.js');
+const HttpClient = require('../../helpers/httpClient/HttpClient');
 const url = process.argv[2];
 
 console.log('asked url:: GET', url);
 
 
-const getUrl = async() => {
+const getUrl = async () => {
 
   const opts = {
     encodeURI: false,
