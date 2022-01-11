@@ -17,7 +17,7 @@ class CSV {
    *  delimiter: ','
    * }
    */
-  constructor (opts) {
+  constructor(opts) {
     // NodeJS fs writeFile and appendFile options (https://nodejs.org/api/fs.html#fs_fs_writefile_file_data_options_callback)
     this.filePath = opts.filePath;
     this.encoding = opts.encoding || 'utf8';
@@ -116,9 +116,10 @@ class CSV {
 
   /**
    * Read CSV rows and convert it into the array of objects.
+   * @param {boolean} convertType - if true convert JSON to object and other types, default is true
    * @return {Array} - array of objects where each element (object) is one CSV row
    */
-  async readRows() {
+  async readRows(convertType = true) {
     const opts = {
       encoding: this.encoding,
       flag: 'r'
@@ -143,13 +144,16 @@ class CSV {
 
         fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with only one
         fieldValue = fieldValue.trim(); // trim start & end of the string
-        fieldValue = fieldValue.replace(/^\"/, '');
-        fieldValue = fieldValue.replace(/\"$/, '');
+        fieldValue = fieldValue.replace(/^\"/, '').replace(/\"$/, ''); // remove " from the beginning and the end
+        fieldValue = fieldValue.replace(/\'/g, '"'); // single quote ' to double quoted " (to ge valid JSON)
 
-        // convert {} or []
-        if ((/^\{/.test(fieldValue) && /\}$/.test(fieldValue)) || (/^\[/.test(fieldValue) && /\]$/.test(fieldValue))) {
-          fieldValue = JSON.parse(fieldValue);
-        }
+        // find {} or [] and convert JSON to object
+        // if (toObject && ((/^\{/.test(fieldValue) && /\}$/.test(fieldValue)) || (/^\[/.test(fieldValue) && /\]$/.test(fieldValue)))) {
+        //   fieldValue = JSON.parse(fieldValue);
+        // }
+
+        if (!!convertType) { fieldValue = this._typeConvertor(fieldValue); }
+        console.log('fieldValue::', typeof fieldValue, fieldValue);
 
         rowObj[field] = fieldValue;
       });
@@ -222,6 +226,32 @@ class CSV {
     fieldValue = '"' + fieldValue + '"'; // wrap into double quotes "..."
 
     return fieldValue;
+  }
+
+
+  /**
+   * Convert string into integer, float or boolean.
+   * @param {string} value
+   * @returns {string | number | boolean | object}
+   */
+  _typeConvertor(value) {
+    function isJSON(value) {
+      try { JSON.parse(value); }
+      catch (err) { return false; }
+      return true;
+    }
+
+    if (!!value && !isNaN(value) && !/\./.test(value)) { // convert string into integer (12)
+      value = parseInt(value, 10);
+    } else if (!!value && !isNaN(value) && /\./.test(value)) { // convert string into float (12.35)
+      value = parseFloat(value);
+    } else if (value === 'true' || value === 'false') { // convert string into boolean (true)
+      value = JSON.parse(value);
+    } else if (isJSON(value)) {
+      value = JSON.parse(value);
+    }
+
+    return value;
   }
 
 

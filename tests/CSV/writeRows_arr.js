@@ -1,4 +1,4 @@
-const {CSV} = require('../../../index.js');
+const { CSV } = require('../../index.js');
 
 const fja = async () => {
 
@@ -18,14 +18,14 @@ const fja = async () => {
 
 
   // write rows 3x with same array
-  for (let i = 1; i <=3; i++) {
+  for (let i = 1; i <= 3; i++) {
     // rows is array of objects
     const rows = [
       ['www.site1.com', 'Peter', 55, 'M'],
       ['www.site2.com', 'John'],
-      [{web: 'test1.net'}, 'Ana', 22],
+      [{ web: 'test1.net' }, 'Ana', 22],
       [['test2.net'], 'Ivan'],
-      [[{web: 'test3.net'}], 'Sonja']
+      [[{ web: 'test3.net' }], 'Sonja']
     ];
     await csv.writeRows(rows);
     console.log('writed::', i);
