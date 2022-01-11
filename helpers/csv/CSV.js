@@ -153,7 +153,7 @@ class CSV {
         // }
 
         if (!!convertType) { fieldValue = this._typeConvertor(fieldValue); }
-        console.log('fieldValue::', typeof fieldValue, fieldValue);
+        // console.log('fieldValue::', typeof fieldValue, fieldValue);
 
         rowObj[field] = fieldValue;
       });

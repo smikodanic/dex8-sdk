@@ -9,7 +9,7 @@ const fse = require('fs-extra');
 
 class RuntimeCommands {
 
-  constructor (ff) {
+  constructor(ff) {
     this.ff = ff;
     this.flag;
   }
@@ -27,7 +27,7 @@ class RuntimeCommands {
       output: process.stdout
     });
 
-    rl.on('line', (line) => {
+    rl.on('line', async (line) => {
       line = line.replace(/\s+/g, ' ').trim();
 
       if (line === '') {
@@ -76,7 +76,9 @@ class RuntimeCommands {
 
       } else {
         console.log(':serial execution\n');
-        this._exeSerial(line); // line: 'openLoginPage, login'
+        this._resume(); // if the task is paused
+        await this._exeSerial(line); // line: 'openLoginPage, login'
+        this._stop();
       }
 
     });
@@ -220,7 +222,7 @@ class RuntimeCommands {
   _typeConvertor(value) {
     function isJSON(str) {
       try { JSON.parse(str); }
-      catch(err) { return false; }
+      catch (err) { return false; }
       return true;
     }
 
@@ -299,7 +301,7 @@ class RuntimeCommands {
    */
   async _exeFunction(ff_code) {
     try {
-      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
       const func = new AsyncFunction('x', 'lib', ff_code);
       await this.ff.one(func);
     } catch (err) {
