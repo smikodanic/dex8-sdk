@@ -14,7 +14,9 @@ class CSV {
    *  encoding: 'utf8',
    *  mode: '0664',
    *  fields: ['url', 'name'],
-   *  delimiter: ','
+   *  fieldDelimiter: ',',
+   *  fieldWraper: '"',
+   *  rowDelimiter: '\n',
    * }
    */
   constructor(opts) {
@@ -26,10 +28,11 @@ class CSV {
     // CSV file options
     this.fields = opts.fields; // array of CSV fields
     this.fieldDelimiter = opts.fieldDelimiter || ',';
+    this.fieldWraper = opts.fieldWraper || '"';
     this.rowDelimiter = opts.rowDelimiter || '\n';
 
-    // derivates
-    this.header = this.fields.join() + this.rowDelimiter;
+    // header
+    this.header = this._fields2header();
   }
 
 
@@ -117,14 +120,15 @@ class CSV {
   /**
    * Read CSV rows and convert it into the array of objects.
    * @param {boolean} convertType - if true convert JSON to object and other types, default is true
+   * @param {string} csvTxt - the text from the CSV file (Notice: First row contains fields, for example: "name", "age", "company")
    * @return {Array} - array of objects where each element (object) is one CSV row
    */
-  async readRows(convertType = true) {
+  async readRows(convertType = true, csvTxt) {
     const opts = {
       encoding: this.encoding,
       flag: 'r'
     };
-    const rows_str = await fse.readFile(this.filePath, opts);
+    const rows_str = csvTxt || await fse.readFile(this.filePath, opts);
 
     // convert string into array
     let rows = rows_str.split(this.rowDelimiter);
@@ -135,22 +139,19 @@ class CSV {
     // remove empty rows
     rows = rows.filter(row => !!row);
 
-    // convert rows into the objects
+    // correct row fields
+    const splitter = this.fieldWrapper + this.fieldDelimiter + this.fieldWrapper;
     rows = rows.map(row => {
-      const row_str_arr = row.split(this.fieldDelimiter);
+      const row_str_arr = row.split(splitter);  // split by ","
       const rowObj = {};
       this.fields.forEach((field, key) => {
         let fieldValue = row_str_arr[key];
+        if (!fieldValue) { rowObj[field] = ''; return; }
 
         fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with only one
         fieldValue = fieldValue.trim(); // trim start & end of the string
         fieldValue = fieldValue.replace(/^\"/, '').replace(/\"$/, ''); // remove " from the beginning and the end
         fieldValue = fieldValue.replace(/\'/g, '"'); // single quote ' to double quoted " (to ge valid JSON)
-
-        // find {} or [] and convert JSON to object
-        // if (toObject && ((/^\{/.test(fieldValue) && /\}$/.test(fieldValue)) || (/^\[/.test(fieldValue) && /\]$/.test(fieldValue)))) {
-        //   fieldValue = JSON.parse(fieldValue);
-        // }
 
         if (!!convertType) { fieldValue = this._typeConvertor(fieldValue); }
         // console.log('fieldValue::', typeof fieldValue, fieldValue);
@@ -167,6 +168,36 @@ class CSV {
 
 
 
+  /**
+   * Get fields array from the first (header) row.
+   * For example if header is "name", "age", "company"  => ['name', 'age', 'company']
+   * @param {string} csvTxt - CSV file content
+   * @returns {Array} - array of fields
+   */
+  extractFields(csvTxt) {
+    const rows = csvTxt.split(this.rowDelimiter);
+    const first_row = rows[0];
+
+    let splitter = this.fieldWrapper + this.fieldDelimiter + this.fieldWrapper; // "name","age","company"
+    if (first_row.indexOf(splitter) == -1) { splitter = this.fieldDelimiter; } // name,age,company
+
+
+    let fields = first_row.split(splitter); // split by ","
+    if (!fields.length) { throw new Error(`Fields are not extracted from CSV text. Splitter: ${splitter}`); }
+
+    fields = fields.map(field => {
+      field = field.trim();
+      field = field.replace(/^\"/, '').replace(/\"$/, ''); // remove " from the beginning
+      return field;
+    });
+
+    this.fields = fields;
+
+    return fields;
+  }
+
+
+
 
 
 
@@ -174,6 +205,16 @@ class CSV {
 
   /***************************** PRIVATE ****************************/
   /******************************************************************/
+
+  /**
+   * Convert this.fields array to string which is the first row (header) in the CSV file.
+   * @returns {string}
+   */
+  _fields2header() {
+    const fields = this.fields.map(field => this.fieldWrapper + field + this.fieldWrapper); // ['"name"', '"age"']
+    const header = fields.join(this.fieldDelimiter) + this.rowDelimiter; // "name","age"\n
+    return header;
+  }
 
   /**
    * Convert array of rows to string.
