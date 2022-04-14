@@ -217,8 +217,8 @@ class HttpClient {
 
     // reformatting NodeJS errors
     if (error.code === 'ENOTFOUND') {
-      err.status = 400;
-      err.message = `400 Bad Request [ENOTFOUND] ${url}`;
+      err.status = 404;
+      err.message = `404 Bad Request [ENOTFOUND] ${url}`;
     } else if (error.code === 'ECONNREFUSED') {
       err.status = 400;
       err.message = `400 Bad Request [ECONNREFUSED] ${url}`;

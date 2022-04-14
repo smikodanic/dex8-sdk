@@ -75,6 +75,18 @@ class Pptr {
   }
 
 
+  /**
+   * Select the option by the value
+   * @param {Page|Frame} page - puppeteer Page or Frame object
+   * @param {string} sel - css selector for SELECT tag
+   * @param {string} val - the OPTION tag value attribute
+   * @returns {void}
+   */
+  async selectOptionByValue(page, sel, val) {
+    await page.select(sel, val);
+  }
+
+
 
   /**
    * Click the element defined by the xPath which contains text

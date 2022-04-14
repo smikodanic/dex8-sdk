@@ -75,10 +75,12 @@ class RuntimeCommands {
         this.flag = undefined; // reset flag
 
       } else {
-        console.log(':serial execution\n');
-        this._resume(); // if the task is paused
+        console.log(`:serial task(s) execution @status:${this.ff.status}\n`);
+        if (this.ff.status === 'start') { this.ff.stop(); this.ff.start(); }
+        else if (this.ff.status === 'stop') { this.ff.start(); }
+        else if (this.ff.status === 'pause') { this.ff.status = 'stop'; this.ff.start(); }
         await this._exeSerial(line); // line: 'openLoginPage, login'
-        this._stop();
+        this.ff.stop();
       }
 
     });
