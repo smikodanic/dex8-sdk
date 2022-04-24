@@ -92,6 +92,19 @@ class Echo {
 
 
   /**
+   * Method used in task functions as echo.warn('some warning!');
+   * Send warning to API via websocket and/or to linux console.
+   * @param {string} warning - warning message
+   * @return {any}
+   */
+  async warn(warning) {
+    this._format('warn', warning);
+    await this._log();
+    return this.msgObj;
+  }
+
+
+  /**
    * Method used in task functions as echo.image('v1w4fnDx9N5fD4t2ft93Y/88IaZLbaPB8+3O1ef+/+jfXqzzf...');
    * Send image in the base64 format to API via websocket.
    * @param {String} img_b64 - image in the base64 (string) format
@@ -200,6 +213,8 @@ class Echo {
         console.log(chalk.blueBright(`(${time})`, JSON.stringify(this.msgObj.echo_msg))); // print stringified object
       } else if (!!this.msgObj && this.msgObj.echo_method === 'error') { // print error
         console.log(chalk.redBright(`(${time})`, JSON.stringify(this.msgObj.echo_msg.message)));
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'warn') {
+        console.log(chalk.yellow(`(${time})`, this.msgObj.echo_msg)); // print warning
       } else if (!!this.msgObj && this.msgObj.echo_method === 'image') { // print base64 image
         console.log(chalk.yellowBright(`(${time})`, JSON.stringify(this.msgObj.echo_msg)));
       } else if (!!this.msgObj && this.msgObj.echo_method === 'input') { // print input label message
@@ -215,6 +230,8 @@ class Echo {
         console.log(chalk.blueBright(msg)); // print object
       } else if (!!this.msgObj && this.msgObj.echo_method === 'error') {
         console.log(chalk.redBright(msg)); // print error
+      } else if (!!this.msgObj && this.msgObj.echo_method === 'warn') {
+        console.log(chalk.yellow(msg)); // print warning
       } else if (!!this.msgObj && this.msgObj.echo_method === 'image') {
         console.log(chalk.yellowBright(msg)); // print base64 image
       } else if (!!this.msgObj && this.msgObj.echo_method === 'input') {
