@@ -342,7 +342,8 @@ class HttpClient {
     if (!!body_obj && !/GET/i.test(method)) {
       answer.req.payload = body_obj;
       const body_str = JSON.stringify(body_obj);
-      this.headers['content-length'] = body_str.length;
+      const contentLength = Buffer.byteLength(body_str, 'utf-8');
+      this.headers['content-length'] = contentLength;
       clientRequest.write(body_str);
     }
 
@@ -471,8 +472,9 @@ class HttpClient {
     let redirectCounter = 1;
 
     while (!!answer && /^3\d{2}/.test(answer.status) && redirectCounter <= this.opts.maxRedirects) { // 300, 301, 302, ...
-
-      const url_new = url_node.resolve(url, answer.res.headers.location); // redirected URL is in 'location' header
+      const from = url;
+      const to = answer.res.headers.location || '';
+      const url_new = url_node.resolve(from, to); // redirected URL is in 'location' header
       console.log(`#${redirectCounter} redirection ${answer.status} from ${this.url} to ${url_new}`);
 
       answer = await this.askOnce(url_new, method, body_obj); // repeat request with new url
