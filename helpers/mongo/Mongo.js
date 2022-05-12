@@ -314,6 +314,27 @@ class Mongo {
   }
 
 
+  /**
+   * Update a doc.
+   * @param {Object} moQuery - mongo query
+   * @param {Object} docNew - new, updated document
+   * @param {Object} updOpts - https://mongoosejs.com/docs/api/model.html#model_Model.findOneAndUpdate
+   * @returns {Promise<Object>}
+   */
+  editMulti(moQuery, docNew, updOpts) {
+    if (!updOpts) {
+      // default options https://mongoosejs.com/docs/api.html#query_Query-findOneAndUpdate
+      updOpts = {
+        strict: true,
+        upsert: false,
+        writeConcern: null,
+        omitUndefined: false
+      };
+    }
+    return this.model.updateMany(moQuery, docNew, updOpts);
+  }
+
+
 
   /**
    * Count docs by the mongo query.
