@@ -12,16 +12,10 @@ console.log('asked url:: GET', url);
 
 
 const getUrl = async () => {
-  try {
-    const dhc = new HttpClient(); // dex8 http client instance
-    const answer = await dhc.askOnce(url);
-
-    console.log('answer:');
-    console.log(util.inspect(answer, false, 3, true));
-
-  } catch (err) {
-    throw err;
-  }
+  const dhc = new HttpClient(); // dex8 http client instance
+  const answer = await dhc.askOnce(url);
+  console.log('answer:');
+  console.log(util.inspect(answer, false, 3, true));
 };
 
 

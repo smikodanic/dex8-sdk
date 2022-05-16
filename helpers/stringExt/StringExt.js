@@ -68,6 +68,50 @@ class StringExt {
   }
 
 
+
+  /**
+   * Convert price string to number
+   * 2,123.00 -> 21123.00
+   * 2.123,00 -> 21123.00
+   * @param {string} p - price
+   * @returns {number}
+   */
+  _price2number() {
+    Object.assign(String.prototype, {
+      price2number() {
+        let p = this; // price
+        if (!p) { return null; }
+
+        p = p
+          .replace(/\n+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .replace(/\$|\€|\£|\¥‎|\₽|USD|EUR|GBP|RUB|KN/i, '')
+          .trim();
+
+        // replace comma as decimal separator with dot
+        const matchedA = p.match(/(.)\d{2}$/);
+        const decimal_separator = matchedA[1];
+        if (decimal_separator === ',') { p = p.replace(',', '.'); }
+
+        // remove first . or , if there are two
+        if (/\d+[\.|\,]\d+\.\d+/.test(p)) { p = p.replace(/\.|\,/, ''); }
+
+        // convert to number
+        p = parseFloat(p);
+
+        // round to 2 decimals
+        p = +p.toFixed(2);
+
+
+        // console.log('p::', p);
+        return p;
+      }
+    });
+  }
+
+
+
+
 }
 
 

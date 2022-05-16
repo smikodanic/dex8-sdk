@@ -359,7 +359,7 @@ class HttpClient {
         });
 
 
-        res.on('end', () => {
+        const resolveAnswer = () => {
           // concat buffer parts
           const buf = Buffer.concat(buf_chunks);
 
@@ -385,8 +385,6 @@ class HttpClient {
             if (!!contentObj) { content = contentObj; }
           } catch (err) { }
 
-
-
           // format answer
           const ans = { ...answer }; // clone object to prevent overwrite of object properies once promise is resolved
           ans.status = res.statusCode; // 2xx -ok response, 4xx -client error (bad request), 5xx -server error
@@ -397,11 +395,17 @@ class HttpClient {
           ans.res.content = content;
           ans.time.res = this._getTime();
           ans.time.duration = this._getTimeDiff(ans.time.req, ans.time.res);
-
           resolve(ans);
 
           this._killAgent(agent);
-        });
+        };
+
+
+        // when server sends normal response
+        res.on('end', resolveAnswer);
+
+        // when server sends HTTP header Connection: 'keep-alive' the res.on('end', ...) is never fired
+        setTimeout(resolveAnswer, this.opts.timeout);
 
       });
 
