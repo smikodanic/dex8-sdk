@@ -8,25 +8,34 @@ const path = require('path');
 class Pptr {
 
   /**
-   * Autoscroll the web page where content is loaded dynamically as the user scroll down. For example the facebook posts.
-   * Scroll vertically to the last element.
-   * The scroll will stop when the text content of the last element is equal to the previous element text content. What means there's no new content on the page.
-   * @param {Page|Frame} page - puppeteer Page or Frame object
-   * @param {string} cssSel - CSS selector of the last repetitive content, for example table > tbody > tr:last-child
-   * @param {number} delay - the time interval between every consecutive scroll
-   * @returns {void}
-   */
-  async autoscroll(page, cssSel, delay = 1300) {
+     * Autoscroll the web page where content is loaded dynamically as the user scroll down. For example the facebook posts.
+     * Scroll vertically to the last element.
+     * The scroll will stop when the text content of the last element is equal to the previous element text content. What means there's no new content on the page.
+     * @param {Page|Frame} page - puppeteer Page or Frame object
+     * @param {string} cssSel - CSS selector of the last repetitive content, for example table > tbody > tr:last-child
+     * @param {number} delay - the time interval between every consecutive scroll
+     * @returns {void}
+     */
+  async autoscroll(page, cssSel, delay = 3400) {
     return await page.evaluate((cssSel, delay) => {
       return new Promise((resolve, reject) => {
         let lastElemContent;
         let scrollCounter = 0;
-        const ID = setInterval(() => {
+        const ID = setInterval(async () => {
           const elem = document.querySelector(cssSel);
+
+          if (lastElemContent === elem.textContent) {
+            clearInterval(ID);
+            resolve({ lastElemContent, scrollCounter });
+            return;
+          }
+
+          // scroll to last element
           elem.scrollIntoView();
 
-          // console.log('lastElemContent::', lastElemContent);
-          if (lastElemContent === elem.textContent) { clearInterval(ID); resolve({ lastElemContent, scrollCounter }); }
+          // scroll to up to initiate new content to load
+          await new Promise(r => setTimeout(r, 700));
+          window.scrollBy(0, -10);
 
           lastElemContent = elem.textContent;
           scrollCounter++;

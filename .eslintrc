@@ -3,7 +3,8 @@
 		"jQuery": false,
     "$": false,
 		"AsyncFunction": true,
-    "document": true
+    "document": true,
+    "window": true
 	},
 	"env": {
 		"browser": false,
