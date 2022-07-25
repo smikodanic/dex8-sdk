@@ -12,8 +12,9 @@ class HttpClient {
 
   /**
    * @param {Object} opts - HTTP Client options {encodeURI, timeout, retry, retryDelay, maxRedirects, headers}
+   * @param {Object} proxyAgent - proxy agent (https://www.npmjs.com/package/https-proxy-agent)
    */
-  constructor(opts) {
+  constructor(opts, proxyAgent) {
     this.url;
     this.protocol = 'http:';
     this.hostname = '';
@@ -48,6 +49,8 @@ class HttpClient {
     // default request headers
     this.headers = this.opts.headers;
 
+    // proxy agent
+    this.proxyAgent = proxyAgent;
   }
 
 
@@ -188,14 +191,12 @@ class HttpClient {
     };
 
     let agent;
-    if (/^https/.test(this.protocol)) {
-      agent = new https.Agent(options);
-    } else {
-      agent = new http.Agent(options);
-    }
+    if (!!this.proxyAgent) { agent = this.proxyAgent; }
+    else { agent = /^https/.test(this.protocol) ? new https.Agent(options) : new http.Agent(options); }
 
     return agent;
   }
+
 
   /**
    * Kill the agent when it finish its job.
