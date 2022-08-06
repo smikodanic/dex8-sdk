@@ -15,7 +15,7 @@ class CSV {
    *  mode: '0664',
    *  fields: ['url', 'name'],
    *  fieldDelimiter: ',',
-   *  fieldWraper: '"',
+   *  fieldWrapper: '"',
    *  rowDelimiter: '\n',
    * }
    */
@@ -27,9 +27,9 @@ class CSV {
 
     // CSV file options
     this.fields = opts.fields; // array of CSV fields
-    this.fieldDelimiter = opts.fieldDelimiter || ',';
-    this.fieldWraper = opts.fieldWraper || '"';
-    this.rowDelimiter = opts.rowDelimiter || '\n';
+    this.fieldDelimiter = opts.fieldDelimiter !== undefined ? opts.fieldDelimiter : ',';
+    this.fieldWrapper = opts.fieldWrapper !== undefined ? opts.fieldWrapper : ''; // when field is JSON then use empty string as field delimiter
+    this.rowDelimiter = opts.rowDelimiter !== undefined ? opts.rowDelimiter : '\n';
 
     // header
     this.header = this._fields2header();
@@ -142,7 +142,7 @@ class CSV {
     // correct row fields
     const splitter = this.fieldWrapper + this.fieldDelimiter + this.fieldWrapper;
     rows = rows.map(row => {
-      const row_str_arr = row.split(splitter);  // split by ","
+      const row_str_arr = row.split(splitter);  // split by , or  ","
       const rowObj = {};
       this.fields.forEach((field, key) => {
         let fieldValue = row_str_arr[key];
@@ -151,7 +151,7 @@ class CSV {
         fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with only one
         fieldValue = fieldValue.trim(); // trim start & end of the string
         fieldValue = fieldValue.replace(/^\"/, '').replace(/\"$/, ''); // remove " from the beginning and the end
-        fieldValue = fieldValue.replace(/\'/g, '"'); // single quote ' to double quoted " (to ge valid JSON)
+        // fieldValue = fieldValue.replace(/\'/g, '"'); // single quote ' to double quoted " (to ge valid JSON)
 
         if (!!convertType) { fieldValue = this._typeConvertor(fieldValue); }
         // console.log('fieldValue::', typeof fieldValue, fieldValue);
@@ -165,6 +165,67 @@ class CSV {
 
     return rows;
   }
+
+
+
+
+  /**
+   * Find CSV row by query and update it with doc.
+   * @param {object} query - find row by query: {name: 'John', age: 22}
+   * @param {object} doc - update found rows with doc: {name: 'John Doe', age: 23, company: 'Cloud Ltd'}
+   * @return {{count:number, rows_updated: object[]}} - count of updated rows
+   */
+  async updateRows(query, doc) {
+    const rows = await this.readRows(false) || [];
+
+    let count = 0;
+
+    // find & update rows
+    const rows_updated = rows.map(row => {
+      // filter row to be updated
+      const tf = this._searchLogic(row, query);
+
+      // update a row
+      if (tf) {
+        count++;
+        for (const row_field of Object.keys(row)) {
+          // update only row fields contained in the doc, other fields will remain same
+          if (Object.keys(doc).includes(row_field)) {
+            row[row_field] = doc[row_field] || '';
+          }
+        }
+      }
+
+      return row;
+    });
+
+    await this.writeRows(rows);
+
+    const update_res = { count, rows_updated };
+    return update_res;
+  }
+
+
+
+  /**
+   * Find CSV row by the query.
+   * @param {object} query - find row by query: {name: 'John', age: 22}
+   * @return {object[]} - found rows
+   */
+  async findRows(query) {
+    const rows = await this.readRows(true) || [];
+
+    if (!query || (query instanceof Object && Object.keys(query).length === 0)) { return rows; } // when findRows() or findRows({}) is used
+
+    // find rows
+    const rows_found = rows.filter(row => {
+      const tf = this._searchLogic(row, query);
+      return tf;
+    });
+
+    return rows_found;
+  }
+
 
 
 
@@ -216,6 +277,7 @@ class CSV {
     return header;
   }
 
+
   /**
    * Convert array of rows to string.
    * Argument "rows" can be an array of objects: [{url: 'www.site1.com', name: 'Peter'}, ...] where url and name must be in the this.fields
@@ -239,18 +301,18 @@ class CSV {
 
   /**
    * Get field value from the row object after some corrections
-   * @param {Object} row - CSV row in the object format: {url: 'www.site1.com', name: 'Peter'}
-   * @param {String} field - field of the row object: 'url'
-   * @return {String} - row field in the string format. if the value is object then it is stringified
+   * @param {object} row - CSV row in the object format: {url: 'www.site1.com', name: 'Peter'}
+   * @param {string} field - field of the row object: 'url'
+   * @return {string} - row field in the string format. if the value is object then it is stringified
    */
   _get_fieldValue(row, field) {
     // correct & beautify field value
     let fieldValue = row[field];
 
-    if (!fieldValue && fieldValue !== 0) { fieldValue = ''; }
-
     // convert into the string because CSV fields are strings
-    if (typeof fieldValue === 'object') {
+    if (fieldValue === undefined) {
+      fieldValue = '';
+    } else if (typeof fieldValue === 'object') {
       fieldValue = JSON.stringify(fieldValue); // convert object into string
       fieldValue = fieldValue.replace(/\"/g, '\'');
     } else if (typeof fieldValue === 'number') {
@@ -264,7 +326,7 @@ class CSV {
     fieldValue = fieldValue.replace(/ {2,}/g, ' '); // replace 2 or more empty spaces with just one space
     fieldValue = fieldValue.replace(/\n|\r/g, ''); // remove new line and carriage returns
     fieldValue = fieldValue.trim(); // trim start & end of the string
-    fieldValue = '"' + fieldValue + '"'; // wrap into double quotes "..."
+    fieldValue = this.fieldWrapper + fieldValue + this.fieldWrapper; // wrap into double quotes "..."
 
     return fieldValue;
   }
@@ -293,6 +355,56 @@ class CSV {
     }
 
     return value;
+  }
+
+
+  /**
+   * Test CSV row against query. Query is simmilar to MongoDB -> $eq, $ne, $gt, ....
+   * @param {object} row - CSV row in object format
+   * @param {object} query - query for the row object, for example: {name: {$regex: /john/i}}
+   * @returns {boolean}
+   */
+  _searchLogic(row, query) {
+    const props = Object.keys(query);
+    let tf = true;
+
+    for (const prop of props) {
+      const $eq = query[prop].$eq; // query -> {name: {$eq: 'Johnny'}}
+      const $ne = query[prop].$ne; // {name: {$ne: 'Johnny'}}
+      const $gt = query[prop].$gt; // {age: {$gt: 22}}
+      const $gte = query[prop].$gte; // {age: {$gte: 22}}
+      const $lt = query[prop].$lt; // {name: {$lt: 22}}
+      const $lte = query[prop].$lte; // {name: {$lte: 22}}
+      const $regex = query[prop].$regex; // {name: {$regex: /Joh/i}}
+      const $in = query[prop].$in; // {name: {$in: ['John', 'Mark']}}
+      const $exists = query[prop].$exists; // {user_id: {$exists: false}}
+
+      if ($eq !== undefined) {
+        tf = tf && row[prop] === query[prop].$eq;
+      } else if ($ne !== undefined) {
+        tf = tf && row[prop] !== query[prop].$ne;
+      } else if ($gt !== undefined) {
+        tf = tf && row[prop] > query[prop].$gt;
+      } else if ($gte !== undefined) {
+        tf = tf && row[prop] >= query[prop].$gte;
+      } else if ($lt !== undefined) {
+        tf = tf && row[prop] < query[prop].$lt;
+      } else if ($lte !== undefined) {
+        tf = tf && row[prop] <= query[prop].$lte;
+      } else if ($regex !== undefined) {
+        tf = tf && $regex.test(row[prop]);
+      } else if ($in !== undefined) {
+        tf = tf && query[prop].$in.indexOf(row[prop]) !== -1;
+      } else if ($exists !== undefined) {
+        const extProps = Object.keys(row);
+        if ($exists === true) { tf = tf && extProps.indexOf(prop) !== -1; }
+        else if ($exists === false) { tf = tf && extProps.indexOf(prop) === -1; }
+      } else {
+        tf = tf && row[prop] === query[prop];
+      }
+
+    }
+    return tf;
   }
 
 

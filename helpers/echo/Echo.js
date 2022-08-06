@@ -39,7 +39,7 @@ class Echo {
 
 
   /**
-   * Method used in the task functions as echo.log('My message');
+   * Method used in the task functions as await echo.log('My message');
    * Send comma separated strings to API via websocket and/or to linux console.
    * Use multiple parameters like in console.log --> echo.log('one', 'two')
    * @param {String} strings - strings separated by comma, for example echo.log('one', 'two')
@@ -66,6 +66,32 @@ class Echo {
 
 
   /**
+   * Method used in task functions as await echo.warn('some warning!');
+   * Send warning to API via websocket and/or to linux console.
+   * @param {String} strings - strings separated by comma, for example echo.log('one', 'two')
+   * @return {any}
+   */
+  async warn(...strings) {
+    // if strings is object then convert it into string
+    strings = strings.map(s => {
+      if (typeof s === 'object') {
+        try {
+          s = JSON.stringify(s, null, 2);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+      return s;
+    });
+
+    const str = strings.join(' '); // join with space  ::  echo.log('a', 'b') ---> ['a', 'b'] ---> 'a b'
+    this._format('warn', str);
+    await this._log();
+    return this.msgObj;
+  }
+
+
+  /**
    * Method used in task functions as echo.objekt({uri: 'deployment/changeaction/5e0246a283cf516d4b788f43', {action: 'stop'}});
    * Send object to API via websocket and/or to linux console.
    * @param {Object} obj - object
@@ -86,19 +112,6 @@ class Echo {
    */
   async error(err) {
     this._format('error', err);
-    await this._log();
-    return this.msgObj;
-  }
-
-
-  /**
-   * Method used in task functions as echo.warn('some warning!');
-   * Send warning to API via websocket and/or to linux console.
-   * @param {string} warning - warning message
-   * @return {any}
-   */
-  async warn(warning) {
-    this._format('warn', warning);
     await this._log();
     return this.msgObj;
   }

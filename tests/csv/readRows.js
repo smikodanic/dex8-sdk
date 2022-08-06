@@ -13,6 +13,7 @@ const fja = async () => {
 
     fields: ['url', 'name', 'size'], // only these fields will be effective
     fieldDelimiter: ',',
+    fieldWrapper: '"',
     rowDelimiter: '\n'
   };
   const csv = new CSV(csvOpts);

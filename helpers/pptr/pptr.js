@@ -46,6 +46,39 @@ class Pptr {
   }
 
 
+  /**
+     * Scroll the web page to bottom.
+     * The page will scroll for innerHeight for every delay miliseconds until it reach the end.
+     * @param {Page|Frame} page - puppeteer Page or Frame object
+     * @param {number} delay - the time interval between every consecutive scroll
+     * @returns {void}
+     */
+  async scrollToBottom(page, delay = 100) {
+    return await page.evaluate((delay) => {
+      return new Promise((resolve, reject) => {
+        let scrollTop = -1;
+        let scrollCounter = 0;
+        console.log(delay);
+
+        const ID = setInterval(async () => {
+          console.log('scrollCounter::', scrollCounter, document.documentElement.scrollTop, scrollTop);
+          window.scrollBy(0, window.innerHeight);
+
+          if (document.documentElement.scrollTop !== scrollTop) {
+            scrollTop = document.documentElement.scrollTop;
+            scrollCounter++;
+          } else {
+            clearInterval(ID);
+            resolve({ scrollTop, scrollCounter });
+            return;
+          }
+
+        }, delay);
+
+      });
+    }, delay);
+  }
+
 
   /**
    * Click the SELECT tag and then click OPTION with the text

@@ -31,7 +31,7 @@ class FunctionFlow {
     this.goTo; // go to funcs index (a function within serial(funcs) method)
 
     // iteration properties
-    this.lastExecuted = { method: '', args: [] }; // last executed FunctionFlow bundle method (serial, one, parallel, ...)
+    this.lastExecuted = { method: '', args: [] }; // last executed FunctionFlow bundle method (serial, serialEach, serialRepeat, one, parallel, ...)
     this.iteration = 0; // current iteration in repeat method
     this.iteration_max; // max number of iterations which can be reached by repeat() method - defined with n in repeat(n) method
     this.jumpTo; // jump to repeat() iteration
@@ -145,6 +145,7 @@ class FunctionFlow {
    */
   async serial(funcs) {
     this.lastExecuted = { method: this.serial.name, args: Array.from(arguments) };
+
     await this._serialExe(funcs, this.serial.name);
     return this.x;
   }
@@ -159,6 +160,8 @@ class FunctionFlow {
    * @param {Array} arr - array
    */
   async serialEach(funcs, arr) {
+    this.lastExecuted = { method: this.serialEach.name, args: Array.from(arguments) };
+
     let key = 0;
     for (const elem of arr) {
       this.lib.serialEachElement = elem;
@@ -180,6 +183,8 @@ class FunctionFlow {
    * @param {Number} n - how many times to repet the serial
    */
   async serialRepeat(funcs, n) {
+    this.lastExecuted = { method: this.serialRepeat.name, args: Array.from(arguments) };
+
     for (let i = 1; i <= n; i++) {
       this.lib.serialRepeatIteration = i;
       await this._serialExe(funcs, this.serialRepeat.name);
@@ -386,7 +391,7 @@ class FunctionFlow {
    * "next" will work only inside serial() method.
    */
   next() {
-    if (this.debug && this.lastExecuted.method === 'serial') { this._debugger3(this.next.name); }
+    if (this.debug) { this._debugger3(this.next.name); }
     this.status = 'next';
   }
 
